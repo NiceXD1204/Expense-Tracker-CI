@@ -52,7 +52,7 @@ jobs:
       - name: Checkout infra (GitOps) repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/expense-tracker-infra
+          repository: ${{ github.repository_owner }}/Expense-Tracker-CD
           token: ${{ secrets.INFRA_REPO_TOKEN }}
           path: infra
 
