@@ -1,0 +1,316 @@
+// Central source of truth for color themes. Keep the hex values here in sync
+// with the blocking pre-paint script in index.html (which duplicates a copy
+// so the right theme can be applied before first paint, before this module
+// has even loaded) - see the comment there.
+//
+// Each theme defines 8 tokens for "light" and 8 for "dark". Income/expense/
+// savings are intentionally NOT part of a theme - they're semantic colors
+// defined once in SEMANTIC_COLORS below, constant across every theme, only
+// varying by light/dark mode (see global rule: a "Crimson" theme must not
+// make income look like an expense).
+
+export const DEFAULT_THEME_ID = 'ocean'
+
+export const THEMES = [
+  {
+    id: 'ocean',
+    name: 'Ocean',
+    light: {
+      sidebar: '#1e1e2e',
+      accent: '#3b82f6',
+      accentHover: '#2563eb',
+      pageBg: '#f9fafb',
+      cardBg: '#ffffff',
+      cardBorder: '#f3f4f6',
+      textPrimary: '#111827',
+      textSecondary: '#6b7280',
+    },
+    dark: {
+      sidebar: '#1e1e2e',
+      accent: '#3b82f6',
+      accentHover: '#2563eb',
+      pageBg: '#111827',
+      cardBg: '#1f2937',
+      cardBorder: '#374151',
+      textPrimary: '#f3f4f6',
+      textSecondary: '#9ca3af',
+    },
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset Orange',
+    light: {
+      sidebar: '#1c1917',
+      accent: '#ea7c3a',
+      accentHover: '#d96b2a',
+      pageBg: '#faf6f0',
+      cardBg: '#ffffff',
+      cardBorder: '#e7e0d6',
+      textPrimary: '#1c1917',
+      textSecondary: '#78716c',
+    },
+    dark: {
+      sidebar: '#0c0a09',
+      accent: '#f59e5b',
+      accentHover: '#ea7c3a',
+      pageBg: '#1c1917',
+      cardBg: '#292524',
+      cardBorder: '#3f3a36',
+      textPrimary: '#fafaf9',
+      textSecondary: '#a8a29e',
+    },
+  },
+  {
+    id: 'forest',
+    name: 'Forest',
+    light: {
+      sidebar: '#14302a',
+      accent: '#0f766e',
+      accentHover: '#115e59',
+      pageBg: '#f4f8f6',
+      cardBg: '#ffffff',
+      cardBorder: '#dce8e3',
+      textPrimary: '#102420',
+      textSecondary: '#5b756d',
+    },
+    dark: {
+      sidebar: '#0c211c',
+      accent: '#2dd4bf',
+      accentHover: '#14b8a6',
+      pageBg: '#102420',
+      cardBg: '#1a2e28',
+      cardBorder: '#2f4a42',
+      textPrimary: '#ecfdf5',
+      textSecondary: '#9cb8b0',
+    },
+  },
+  {
+    id: 'terracotta',
+    name: 'Terracotta',
+    light: {
+      sidebar: '#2b2018',
+      accent: '#c2410c',
+      accentHover: '#9a3412',
+      pageBg: '#faf4ee',
+      cardBg: '#ffffff',
+      cardBorder: '#e8dccb',
+      textPrimary: '#2b2018',
+      textSecondary: '#8a7763',
+    },
+    dark: {
+      sidebar: '#1d150f',
+      accent: '#f0855a',
+      accentHover: '#ea7c3a',
+      pageBg: '#241b14',
+      cardBg: '#2e231a',
+      cardBorder: '#463528',
+      textPrimary: '#fbf1e7',
+      textSecondary: '#b9a691',
+    },
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight',
+    light: {
+      sidebar: '#0f172a',
+      accent: '#d97706',
+      accentHover: '#b45309',
+      pageBg: '#f8fafc',
+      cardBg: '#ffffff',
+      cardBorder: '#e2e8f0',
+      textPrimary: '#0f172a',
+      textSecondary: '#64748b',
+    },
+    dark: {
+      sidebar: '#060b16',
+      accent: '#fbbf24',
+      accentHover: '#f59e0b',
+      pageBg: '#0f172a',
+      cardBg: '#1e293b',
+      cardBorder: '#334155',
+      textPrimary: '#f1f5f9',
+      textSecondary: '#94a3b8',
+    },
+  },
+  {
+    id: 'royal',
+    name: 'Royal',
+    light: {
+      sidebar: '#1e1b2e',
+      accent: '#7c3aed',
+      accentHover: '#6d28d9',
+      pageBg: '#f8f7fc',
+      cardBg: '#ffffff',
+      cardBorder: '#e4e0f2',
+      textPrimary: '#1e1b2e',
+      textSecondary: '#756f93',
+    },
+    dark: {
+      sidebar: '#131123',
+      accent: '#a78bfa',
+      accentHover: '#8b5cf6',
+      pageBg: '#1a1730',
+      cardBg: '#241f3d',
+      cardBorder: '#383154',
+      textPrimary: '#f5f3ff',
+      textSecondary: '#ada5c9',
+    },
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    light: {
+      sidebar: '#1c1917',
+      accent: '#e11d48',
+      accentHover: '#be123c',
+      pageBg: '#fff5f6',
+      cardBg: '#ffffff',
+      cardBorder: '#f3dde1',
+      textPrimary: '#1c1917',
+      textSecondary: '#8a7478',
+    },
+    dark: {
+      sidebar: '#120f0e',
+      accent: '#fb7185',
+      accentHover: '#f43f5e',
+      pageBg: '#1f1517',
+      cardBg: '#2b1d20',
+      cardBorder: '#45282c',
+      textPrimary: '#fff1f2',
+      textSecondary: '#c9a6ab',
+    },
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald',
+    light: {
+      sidebar: '#1a2e28',
+      accent: '#059669',
+      accentHover: '#047857',
+      pageBg: '#f3faf6',
+      cardBg: '#ffffff',
+      cardBorder: '#d9ece1',
+      textPrimary: '#102420',
+      textSecondary: '#5e7c71',
+    },
+    dark: {
+      sidebar: '#0e1f1a',
+      accent: '#34d399',
+      accentHover: '#10b981',
+      pageBg: '#11211c',
+      cardBg: '#1b2e27',
+      cardBorder: '#2f4a3f',
+      textPrimary: '#ecfdf5',
+      textSecondary: '#9fbdb0',
+    },
+  },
+  {
+    id: 'slate',
+    name: 'Slate',
+    light: {
+      sidebar: '#0f0f0f',
+      accent: '#475569',
+      accentHover: '#334155',
+      pageBg: '#f8fafc',
+      cardBg: '#ffffff',
+      cardBorder: '#e2e8f0',
+      textPrimary: '#0f172a',
+      textSecondary: '#64748b',
+    },
+    dark: {
+      sidebar: '#050505',
+      accent: '#94a3b8',
+      accentHover: '#64748b',
+      pageBg: '#18181b',
+      cardBg: '#27272a',
+      cardBorder: '#3f3f46',
+      textPrimary: '#f4f4f5',
+      textSecondary: '#a1a1aa',
+    },
+  },
+  {
+    id: 'crimson',
+    name: 'Crimson',
+    light: {
+      sidebar: '#1c1410',
+      accent: '#dc2626',
+      accentHover: '#b91c1c',
+      pageBg: '#fef6f5',
+      cardBg: '#ffffff',
+      cardBorder: '#f5dcdb',
+      textPrimary: '#1c1410',
+      textSecondary: '#8a716c',
+    },
+    dark: {
+      sidebar: '#120c09',
+      accent: '#f87171',
+      accentHover: '#ef4444',
+      pageBg: '#1f1411',
+      cardBg: '#2b1d1a',
+      cardBorder: '#45302b',
+      textPrimary: '#fef2f2',
+      textSecondary: '#c9a39d',
+    },
+  },
+  {
+    id: 'indigo',
+    name: 'Indigo',
+    light: {
+      sidebar: '#1e1b3a',
+      accent: '#4f46e5',
+      accentHover: '#4338ca',
+      pageBg: '#f7f7fc',
+      cardBg: '#ffffff',
+      cardBorder: '#e1e0f5',
+      textPrimary: '#1e1b3a',
+      textSecondary: '#6f6b95',
+    },
+    dark: {
+      sidebar: '#131129',
+      accent: '#818cf8',
+      accentHover: '#6366f1',
+      pageBg: '#181530',
+      cardBg: '#221f3f',
+      cardBorder: '#363159',
+      textPrimary: '#eef2ff',
+      textSecondary: '#a7a3c9',
+    },
+  },
+  {
+    id: 'sand',
+    name: 'Sand',
+    light: {
+      sidebar: '#292015',
+      accent: '#b45309',
+      accentHover: '#92400e',
+      pageBg: '#f5f0e6',
+      cardBg: '#fffdf9',
+      cardBorder: '#e6dcc7',
+      textPrimary: '#292015',
+      textSecondary: '#8a7c61',
+    },
+    dark: {
+      sidebar: '#1c160e',
+      accent: '#e0a23d',
+      accentHover: '#d4910f',
+      pageBg: '#221c12',
+      cardBg: '#2c251a',
+      cardBorder: '#453a26',
+      textPrimary: '#fbf6ea',
+      textSecondary: '#c2b59a',
+    },
+  },
+]
+
+// Income/expense/savings stay semantic and shared across every theme - only
+// the accent + neutral surfaces change per theme. These match the exact
+// green-600/red-500/teal-600 (light) and green-400/red-400/teal-400 (dark)
+// shades already used throughout the app before themes were introduced.
+export const SEMANTIC_COLORS = {
+  light: { income: '#16a34a', expense: '#ef4444', savings: '#0d9488' },
+  dark: { income: '#4ade80', expense: '#f87171', savings: '#2dd4bf' },
+}
+
+export function getTheme(id) {
+  return THEMES.find((t) => t.id === id) || THEMES[0]
+}

@@ -10,7 +10,7 @@ imagePullSecrets: []
 
 service:
   type: ClusterIP
-  port: 8501
+  port: 80
 
 ingress:
   enabled: false
@@ -32,8 +32,8 @@ resources:
 env: {}
 
 probes:
-  path: /_stcore/health
-  port: 8501
+  path: /
+  port: 80
 
 serviceAccount:
   create: true

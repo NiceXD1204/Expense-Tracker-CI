@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Expense Tracker</title>
+    <script>
+      // Applied before first paint so there's no flash of the wrong
+      // light/dark mode or color theme - React mounting is too slow to do
+      // this after. This duplicates a compact copy of src/constants/themes.js
+      // hex values (must be kept in sync with that file) because a classic
+      // synchronous script is the only thing guaranteed to run before paint;
+      // importing the real ES module here would not be.
+      (function () {
+        try {
+          var mode = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
+          if (mode === 'dark') document.documentElement.classList.add('dark')
+
+          var THEMES = {
+            ocean: { light: ['1e1e2e', '3b82f6', '2563eb', 'f9fafb', 'ffffff', 'f3f4f6', '111827', '6b7280'], dark: ['1e1e2e', '3b82f6', '2563eb', '111827', '1f2937', '374151', 'f3f4f6', '9ca3af'] },
+            sunset: { light: ['1c1917', 'ea7c3a', 'd96b2a', 'faf6f0', 'ffffff', 'e7e0d6', '1c1917', '78716c'], dark: ['0c0a09', 'f59e5b', 'ea7c3a', '1c1917', '292524', '3f3a36', 'fafaf9', 'a8a29e'] },
+            forest: { light: ['14302a', '0f766e', '115e59', 'f4f8f6', 'ffffff', 'dce8e3', '102420', '5b756d'], dark: ['0c211c', '2dd4bf', '14b8a6', '102420', '1a2e28', '2f4a42', 'ecfdf5', '9cb8b0'] },
+            terracotta: { light: ['2b2018', 'c2410c', '9a3412', 'faf4ee', 'ffffff', 'e8dccb', '2b2018', '8a7763'], dark: ['1d150f', 'f0855a', 'ea7c3a', '241b14', '2e231a', '463528', 'fbf1e7', 'b9a691'] },
+            midnight: { light: ['0f172a', 'd97706', 'b45309', 'f8fafc', 'ffffff', 'e2e8f0', '0f172a', '64748b'], dark: ['060b16', 'fbbf24', 'f59e0b', '0f172a', '1e293b', '334155', 'f1f5f9', '94a3b8'] },
+            royal: { light: ['1e1b2e', '7c3aed', '6d28d9', 'f8f7fc', 'ffffff', 'e4e0f2', '1e1b2e', '756f93'], dark: ['131123', 'a78bfa', '8b5cf6', '1a1730', '241f3d', '383154', 'f5f3ff', 'ada5c9'] },
+            rose: { light: ['1c1917', 'e11d48', 'be123c', 'fff5f6', 'ffffff', 'f3dde1', '1c1917', '8a7478'], dark: ['120f0e', 'fb7185', 'f43f5e', '1f1517', '2b1d20', '45282c', 'fff1f2', 'c9a6ab'] },
+            emerald: { light: ['1a2e28', '059669', '047857', 'f3faf6', 'ffffff', 'd9ece1', '102420', '5e7c71'], dark: ['0e1f1a', '34d399', '10b981', '11211c', '1b2e27', '2f4a3f', 'ecfdf5', '9fbdb0'] },
+            slate: { light: ['0f0f0f', '475569', '334155', 'f8fafc', 'ffffff', 'e2e8f0', '0f172a', '64748b'], dark: ['050505', '94a3b8', '64748b', '18181b', '27272a', '3f3f46', 'f4f4f5', 'a1a1aa'] },
+            crimson: { light: ['1c1410', 'dc2626', 'b91c1c', 'fef6f5', 'ffffff', 'f5dcdb', '1c1410', '8a716c'], dark: ['120c09', 'f87171', 'ef4444', '1f1411', '2b1d1a', '45302b', 'fef2f2', 'c9a39d'] },
+            indigo: { light: ['1e1b3a', '4f46e5', '4338ca', 'f7f7fc', 'ffffff', 'e1e0f5', '1e1b3a', '6f6b95'], dark: ['131129', '818cf8', '6366f1', '181530', '221f3f', '363159', 'eef2ff', 'a7a3c9'] },
+            sand: { light: ['292015', 'b45309', '92400e', 'f5f0e6', 'fffdf9', 'e6dcc7', '292015', '8a7c61'], dark: ['1c160e', 'e0a23d', 'd4910f', '221c12', '2c251a', '453a26', 'fbf6ea', 'c2b59a'] }
+          }
+          var VARS = ['--color-sidebar', '--color-accent', '--color-accent-hover', '--color-page-bg', '--color-card-bg', '--color-card-border', '--color-text-primary', '--color-text-secondary']
+
+          var colorTheme = localStorage.getItem('colorTheme')
+          if (!THEMES[colorTheme]) colorTheme = 'ocean'
+          var tokens = THEMES[colorTheme][mode]
+          var root = document.documentElement
+          for (var i = 0; i < VARS.length; i++) {
+            var hex = tokens[i]
+            var r = parseInt(hex.substring(0, 2), 16)
+            var g = parseInt(hex.substring(2, 4), 16)
+            var b = parseInt(hex.substring(4, 6), 16)
+            root.style.setProperty(VARS[i], r + ' ' + g + ' ' + b)
+          }
+
+          var semantic = mode === 'dark' ? ['74 222 128', '248 113 113', '45 212 191'] : ['22 163 74', '239 68 68', '13 148 136']
+          root.style.setProperty('--color-income', semantic[0])
+          root.style.setProperty('--color-expense', semantic[1])
+          root.style.setProperty('--color-savings', semantic[2])
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

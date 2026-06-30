@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fallback only - the blocking script in index.html sets these before first
+   paint based on the saved theme/colorTheme. These defaults match the
+   "ocean" theme in light mode, in case that script ever fails to run. */
+:root {
+  --color-sidebar: 30 30 46;
+  --color-accent: 59 130 246;
+  --color-accent-hover: 37 99 235;
+  --color-page-bg: 249 250 251;
+  --color-card-bg: 255 255 255;
+  --color-card-border: 243 244 246;
+  --color-text-primary: 17 24 39;
+  --color-text-secondary: 107 114 128;
+  --color-income: 22 163 74;
+  --color-expense: 239 68 68;
+  --color-savings: 13 148 136;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}

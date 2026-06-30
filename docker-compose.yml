@@ -26,11 +26,14 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_BACKEND_URL: /api
     environment:
       BACKEND_URL: http://backend:8000
     ports:
-      - "8501:8501"
+      - "8501:80"
     depends_on:
       - backend
 
