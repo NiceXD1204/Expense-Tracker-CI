@@ -19,6 +19,7 @@ services:
     build: ./backend
     environment:
       DATABASE_URL: postgresql://expenses:expenses@db:5432/expenses
+      JWT_SECRET_KEY: local-dev-secret-change-before-going-to-production
     ports:
       - "8000:8000"
     depends_on:

@@ -135,6 +135,80 @@ aws ecr describe-repositories --region eu-central-1 \
 If any of these come back non-empty, something didn't get cleaned up and is
 still billing.
 
+## Security notes (auth feature)
+
+> State these back before shipping to real users:
+
+- **Passwords** are hashed with bcrypt via `passlib`. Plain-text passwords are never stored, logged, or transmitted beyond the initial login request.
+- **Data isolation is the #1 correctness requirement.** Every query filters by `user_id == me OR household_id == my_household`. A user can never read, edit, or delete another household's data. The `can_access()` helper enforces this on every write; violations return HTTP 403.
+- **JWT secret:** set `JWT_SECRET_KEY` as an environment variable — never hardcode it. `docker-compose.yml` now sets a local-dev placeholder; replace it with a strong secret (e.g. `openssl rand -hex 32`) before any real deployment. For Kubernetes, put it in a Secret and reference it via Helm values.
+- **HTTPS:** passwords are sent in the login request body. Without TLS, they travel in clear text. Use HTTPS/TLS (via cert-manager + Let's Encrypt or an AWS ACM certificate on the NLB) before real users log in.
+
+---
+
+## Testing auth + i18n + shared household (local docker-compose)
+
+### Setup
+
+```bash
+docker compose up --build
+# Frontend: http://localhost:8501
+# Backend API docs: http://localhost:8000/docs
+```
+
+The backend auto-runs migrations on startup. A demo user (`demo@example.com` / `demo1234`) is seeded on first boot.
+
+---
+
+### Test 1 — Register, login, "Remember me"
+
+1. Open `http://localhost:8501` → you are redirected to `/login` (not logged in).
+2. Click "Register" → create **User A**: `usera@test.com` / `password123`.
+3. Log in as User A. Check "Remember me". Add a **personal** expense (toggle = Personal). Call it "A's private expense".
+4. Close the browser tab, reopen `http://localhost:8501` → you are still logged in (token was in `localStorage`).
+5. Log out.
+6. Log in again WITHOUT checking "Remember me". Close and reopen the tab → you are sent back to `/login` (token was in `sessionStorage`, cleared on tab close). ✓
+
+---
+
+### Test 2 — Data isolation between users
+
+1. Register **User B**: `userb@test.com` / `password123`.
+2. Log in as User B.
+3. Confirm the Transactions, Income, Dashboard pages are **empty** — User B sees none of User A's data. ✓
+4. Add a personal expense as User B. Log out, log in as User A — User A cannot see User B's expense. ✓
+
+---
+
+### Test 3 — Shared household (husband & wife)
+
+1. Log in as **User A** → Settings → "Shared Account" section → click **Create shared account**. Note the invite code (e.g. `xK9mPq2T`).
+2. Log out. Log in as **User B** → Settings → **Join with code** → enter the invite code → join.
+3. Log in as **User A** → add a **shared** expense (Visibility = "Shared (Household)"). Call it "Joint groceries".
+4. Log out. Log in as **User B** → open Transactions → "Joint groceries" appears with the `👥` icon. ✓
+5. Log in as **User A** → confirm "A's private expense" (from Test 1, created as Personal) is **still visible to A** but NOT to B. Log in as User B to verify B cannot see it. ✓
+
+---
+
+### Test 4 — Different household, complete isolation
+
+1. Register **User C**: `userc@test.com` / `password123`.
+2. Log in as User C → Settings → Create a **different** shared account.
+3. Add a shared expense as User C.
+4. Log in as User A or B → confirm **zero** of User C's entries appear anywhere. ✓
+5. Log in as User C → confirm **zero** of A/B's entries appear. ✓
+
+---
+
+### Test 5 — i18n and RTL
+
+1. Log in. In the top bar, switch to **עברית (Hebrew)** → entire app flips to RTL: sidebar moves to the right, text is right-aligned, all labels are in Hebrew. ✓
+2. Switch to **العربية (Arabic)** → same RTL layout, Arabic text. ✓
+3. Switch to **Français**, **Русский**, **中文** — layout returns to LTR, text in respective language, no English strings visible. ✓
+4. Refresh the page → language persists (stored in `localStorage`). ✓
+
+---
+
 ## Two environments
 
 | | Local | AWS (dev cluster) |
