@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import AddRecurringModal from '../components/AddRecurringModal'
 import EmptyState from '../components/EmptyState'
 import { SkeletonCard } from '../components/LoadingSkeleton'
@@ -9,6 +10,7 @@ import useSubscriptions from '../hooks/useSubscriptions'
 import { formatCurrency } from '../utils/format'
 
 export default function Subscriptions() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { items, summary, loading, error, refresh } = useSubscriptions()
   const { create, update, remove } = useRecurring()
@@ -46,14 +48,14 @@ export default function Subscriptions() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Subscriptions</h1>
-          <p className="text-sm text-muted">Recurring expenses you've flagged as subscriptions</p>
+          <h1 className="text-2xl font-bold text-ink">{t('subscriptions.title')}</h1>
+          <p className="text-sm text-muted">{t('subscriptions.subtitle')}</p>
         </div>
         <button
           onClick={modal.openAdd}
           className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
         >
-          + Add subscription
+          {t('subscriptions.add')}
         </button>
       </div>
 
@@ -72,14 +74,14 @@ export default function Subscriptions() {
         ) : (
           <>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Monthly subscriptions</p>
+              <p className="text-sm font-medium text-muted">{t('subscriptions.monthly')}</p>
               <p className="mt-2 text-2xl font-bold text-expense">{formatCurrency(summary.monthly_total)}</p>
-              <p className="mt-1 text-xs text-muted">{summary.count} active</p>
+              <p className="mt-1 text-xs text-muted">{t('subscriptions.activeCount', { count: summary.count })}</p>
             </div>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Yearly cost</p>
+              <p className="text-sm font-medium text-muted">{t('subscriptions.yearly')}</p>
               <p className="mt-2 text-2xl font-bold text-expense">{formatCurrency(summary.yearly_total)}</p>
-              <p className="mt-1 text-xs text-muted">monthly × 12</p>
+              <p className="mt-1 text-xs text-muted">{t('subscriptions.monthlyTimesNote')}</p>
             </div>
           </>
         )}
@@ -87,16 +89,16 @@ export default function Subscriptions() {
 
       <div className="rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">All subscriptions</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('subscriptions.allSubscriptions')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : items.length === 0 ? (
           <div className="p-5">
             <EmptyState
               icon="📺"
-              title="No subscriptions yet"
-              message="Add Netflix, a gym membership, insurance, or anything else that bills you monthly."
+              title={t('subscriptions.noSubscriptions')}
+              message={t('subscriptions.noSubscriptionsHint')}
             />
           </div>
         ) : (

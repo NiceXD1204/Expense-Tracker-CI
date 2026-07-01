@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import AddRecurringModal from '../components/AddRecurringModal'
 import EmptyState from '../components/EmptyState'
 import RecurringRow from '../components/RecurringRow'
@@ -7,6 +8,7 @@ import useEntryModal from '../hooks/useEntryModal'
 import useRecurring from '../hooks/useRecurring'
 
 export default function Recurring() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { recurring, loading, error, create, update, remove, run } = useRecurring()
   const modal = useEntryModal()
@@ -52,8 +54,8 @@ export default function Recurring() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Recurring</h1>
-          <p className="text-sm text-muted">Templates that auto-generate a transaction every month</p>
+          <h1 className="text-2xl font-bold text-ink">{t('recurring.title')}</h1>
+          <p className="text-sm text-muted">{t('recurring.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -61,13 +63,13 @@ export default function Recurring() {
             disabled={running}
             className="rounded-lg border border-card-border px-4 py-2 text-sm font-medium text-muted hover:bg-card-border/50 disabled:opacity-60"
           >
-            {running ? 'Running…' : 'Run now'}
+            {running ? t('recurring.running') : t('recurring.runNow')}
           </button>
           <button
             onClick={modal.openAdd}
             className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
           >
-            + Add recurring
+            + {t('recurring.add')}
           </button>
         </div>
       </div>
@@ -86,13 +88,13 @@ export default function Recurring() {
 
       <div className="rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">Recurring income</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('recurring.incomeSection')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : incomeTemplates.length === 0 ? (
           <div className="p-5">
-            <EmptyState icon="💰" title="No recurring income" message="e.g. a monthly salary that repeats automatically." />
+            <EmptyState icon="💰" title={t('recurring.noIncomeYet')} message={t('recurring.noIncomeHint')} />
           </div>
         ) : (
           incomeTemplates.map((entry) => (
@@ -109,13 +111,13 @@ export default function Recurring() {
 
       <div className="rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">Recurring expenses</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('recurring.expenseSection')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : expenseTemplates.length === 0 ? (
           <div className="p-5">
-            <EmptyState icon="🧾" title="No recurring expenses" message="e.g. rent or a subscription that repeats automatically." />
+            <EmptyState icon="🧾" title={t('recurring.noExpensesYet')} message={t('recurring.noExpensesHint')} />
           </div>
         ) : (
           expenseTemplates.map((entry) => (

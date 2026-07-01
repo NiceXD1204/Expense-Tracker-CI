@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import BudgetBar from '../components/BudgetBar'
 import { CATEGORIES, getCategoryMeta } from '../constants/categories'
 import { getCurrencySymbol, loadCurrency } from '../utils/currency'
@@ -10,6 +11,7 @@ import { loadBudgets, saveBudgets } from '../utils/budgets'
 import { formatCurrency, isSameMonth, monthLabel } from '../utils/format'
 
 export default function Budgets() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { expenses, loading } = useExpenses()
   const { income } = useIncome()
@@ -74,21 +76,21 @@ export default function Budgets() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Budgets</h1>
-          <p className="text-sm text-muted">Set a monthly limit per category — {monthLabel(today)}</p>
+          <h1 className="text-2xl font-bold text-ink">{t('budgets.title')}</h1>
+          <p className="text-sm text-muted">{t('budgets.subtitle')} — {monthLabel(today)}</p>
         </div>
         {savedAt && <span className="text-xs font-medium text-income">Saved ✓</span>}
       </div>
 
       <div className="rounded-xl border border-card-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink">Monthly plan</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('budgets.monthlyPlan')}</h2>
           {planSavedAt && <span className="text-xs font-medium text-income">Saved ✓</span>}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Monthly savings goal</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('budgets.savingsGoal')}</label>
             <div className="flex items-center rounded-lg border border-card-border px-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
               <span className="text-sm text-muted">{currencySymbol}</span>
               <input
@@ -102,7 +104,7 @@ export default function Budgets() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Monthly spending limit</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('budgets.spendingLimit')}</label>
             <div className="flex items-center rounded-lg border border-card-border px-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
               <span className="text-sm text-muted">{currencySymbol}</span>
               <input
@@ -122,35 +124,37 @@ export default function Budgets() {
           disabled={planSaving}
           className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
         >
-          {planSaving ? 'Saving…' : 'Save plan'}
+          {planSaving ? t('common.saving') : t('budgets.savePlan')}
         </button>
 
         <p className="mt-4 text-sm text-muted">
-          If you earn <span className="font-semibold text-ink">{formatCurrency(totalMonthIncome)}</span> and want to
-          save <span className="font-semibold text-ink">{formatCurrency(goal)}</span>, you can spend{' '}
-          <span className="font-semibold text-ink">{formatCurrency(canSpend)}</span> per month.
+          {t('budgets.canSpend', {
+            income: formatCurrency(totalMonthIncome),
+            goal: formatCurrency(goal),
+            amount: formatCurrency(canSpend),
+          })}
         </p>
 
         <div className="mt-4">
           <div className="flex h-3 w-full overflow-hidden rounded-full bg-card-border">
-            <div className="h-full bg-savings" style={{ width: `${pct(goal)}%` }} title="Savings" />
-            <div className="h-full bg-accent" style={{ width: `${pct(limit)}%` }} title="Spending" />
-            <div className="h-full bg-card-border" style={{ width: `${pct(Math.max(remaining, 0))}%` }} title="Remaining" />
+            <div className="h-full bg-savings" style={{ width: `${pct(goal)}%` }} title={t('budgets.savingsLabel')} />
+            <div className="h-full bg-accent" style={{ width: `${pct(limit)}%` }} title={t('budgets.spendingLabel')} />
+            <div className="h-full bg-card-border" style={{ width: `${pct(Math.max(remaining, 0))}%` }} title={t('budgets.remainingLabel')} />
           </div>
           <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-savings" /> Savings {formatCurrency(goal)}
+              <span className="h-2 w-2 rounded-full bg-savings" /> {t('budgets.savingsLabel')} {formatCurrency(goal)}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-accent" /> Spending {formatCurrency(limit)}
+              <span className="h-2 w-2 rounded-full bg-accent" /> {t('budgets.spendingLabel')} {formatCurrency(limit)}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-card-border" /> Remaining {formatCurrency(Math.max(remaining, 0))}
+              <span className="h-2 w-2 rounded-full bg-card-border" /> {t('budgets.remainingLabel')} {formatCurrency(Math.max(remaining, 0))}
             </span>
           </div>
           {overAllocated && (
             <p className="mt-2 text-xs font-medium text-expense">
-              You've allocated {formatCurrency(Math.abs(remaining))} more than your income this month.
+              {t('budgets.overAllocated', { amount: formatCurrency(Math.abs(remaining)) })}
             </p>
           )}
         </div>
@@ -158,7 +162,7 @@ export default function Budgets() {
 
       <div className="rounded-xl border border-card-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between text-sm">
-          <span className="font-medium text-ink">Total budget</span>
+          <span className="font-medium text-ink">{t('budgets.totalBudget')}</span>
           <span className={totalSpent > totalBudget ? 'font-semibold text-expense' : 'text-muted'}>
             {formatCurrency(totalSpent)} / {formatCurrency(totalBudget)}
           </span>
@@ -171,7 +175,7 @@ export default function Budgets() {
       </div>
 
       <div className="rounded-xl border border-card-border bg-card p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Edit monthly budgets</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t('budgets.editBudgets')}</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((category) => {
             const meta = getCategoryMeta(category)

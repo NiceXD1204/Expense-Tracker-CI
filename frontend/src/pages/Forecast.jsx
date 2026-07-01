@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { getForecast } from '../api/forecast'
 import { SkeletonChart } from '../components/LoadingSkeleton'
@@ -11,6 +12,7 @@ import { formatCurrency } from '../utils/format'
 const MONTH_OPTIONS = [3, 6, 12]
 
 export default function Forecast() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { isDark, resolved } = useTheme()
   const chartTheme = getChartTheme(isDark, resolved)
@@ -28,8 +30,6 @@ export default function Forecast() {
     [accounts],
   )
 
-  // Auto-fill the starting balance from Net Worth's total assets once, the
-  // first time it's available - but never overwrite a value the user typed.
   useEffect(() => {
     if (!accountsLoading && !balanceTouched && totalAssets > 0) {
       setStartingBalance(String(totalAssets))
@@ -63,8 +63,8 @@ export default function Forecast() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-ink">Forecast</h1>
-        <p className="text-sm text-muted">Projected cash flow based on your active recurring income and expenses</p>
+        <h1 className="text-2xl font-bold text-ink">{t('forecast.title')}</h1>
+        <p className="text-sm text-muted">{t('forecast.subtitle')}</p>
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-card-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -77,14 +77,14 @@ export default function Forecast() {
                 months === m ? 'border-accent bg-accent/10 text-accent' : 'border-card-border text-muted hover:border-accent/40'
               }`}
             >
-              {m} months
+              {t('forecast.monthsBtn', { count: m })}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-ink" htmlFor="starting-balance">
-            Starting balance
+            {t('forecast.startingBalance')}
           </label>
           <input
             id="starting-balance"
@@ -112,14 +112,14 @@ export default function Forecast() {
             totalNet >= 0 ? 'border-income/30 bg-income/10 text-income' : 'border-expense/30 bg-expense/10 text-expense'
           }`}
         >
-          Based on your recurring entries, you're projected to {totalNet >= 0 ? 'save' : 'lose'}{' '}
-          <span className="font-semibold">{formatCurrency(Math.abs(totalNet))}</span> over the next {months} months,
-          ending with a projected balance of <span className="font-semibold">{formatCurrency(finalBalance)}</span>.
+          {totalNet >= 0
+            ? t('forecast.projectedPositive', { amount: formatCurrency(Math.abs(totalNet)), months, balance: formatCurrency(finalBalance) })
+            : t('forecast.projectedNegative', { amount: formatCurrency(Math.abs(totalNet)), months, balance: formatCurrency(finalBalance) })}
         </div>
       )}
 
       <div className="rounded-xl border border-card-border bg-card p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Projected balance over time</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t('forecast.projectedBalance')}</h2>
         {loading ? (
           <SkeletonChart />
         ) : (
@@ -146,7 +146,7 @@ export default function Forecast() {
       </div>
 
       <div className="rounded-xl border border-card-border bg-card p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Income vs Expenses per month</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t('forecast.incomeVsExpensesPerMonth')}</h2>
         {loading ? (
           <SkeletonChart />
         ) : (
@@ -161,8 +161,8 @@ export default function Forecast() {
                 labelStyle={chartTheme.labelStyle}
               />
               <Legend wrapperStyle={{ fontSize: 12, color: chartTheme.tick.fill }} />
-              <Bar dataKey="expected_income" name="Income" fill={chartTheme.income} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="expected_expenses" name="Expenses" fill={chartTheme.expense} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expected_income" name={t('forecast.incomeCol')} fill={chartTheme.income} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expected_expenses" name={t('forecast.expensesCol')} fill={chartTheme.expense} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -170,19 +170,19 @@ export default function Forecast() {
 
       <div className="overflow-hidden rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">Month-by-month</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('forecast.monthByMonth')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-card-border text-left text-xs uppercase tracking-wide text-muted">
-                <th className="px-5 py-3">Month</th>
-                <th className="px-5 py-3">Income</th>
-                <th className="px-5 py-3">Expenses</th>
-                <th className="px-5 py-3">Net</th>
-                <th className="px-5 py-3">Running balance</th>
+                <th className="px-5 py-3">{t('forecast.month')}</th>
+                <th className="px-5 py-3">{t('forecast.incomeCol')}</th>
+                <th className="px-5 py-3">{t('forecast.expensesCol')}</th>
+                <th className="px-5 py-3">{t('forecast.net')}</th>
+                <th className="px-5 py-3">{t('forecast.runningBalance')}</th>
               </tr>
             </thead>
             <tbody>

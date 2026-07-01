@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import AccountModal from '../components/AccountModal'
 import AccountRow from '../components/AccountRow'
@@ -12,6 +13,7 @@ import { getChartTheme } from '../utils/chartTheme'
 import { formatCurrency } from '../utils/format'
 
 export default function NetWorth() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { accounts, loading, error, create, update, remove } = useAccounts()
   const modal = useEntryModal()
@@ -25,10 +27,10 @@ export default function NetWorth() {
   const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0)
   const netWorth = totalAssets - totalLiabilities
 
-  const chartData = [
-    { name: 'Assets', value: Math.round(totalAssets * 100) / 100 },
-    { name: 'Liabilities', value: Math.round(totalLiabilities * 100) / 100 },
-  ]
+  const chartData = useMemo(() => [
+    { name: t('networth.assets'), value: Math.round(totalAssets * 100) / 100 },
+    { name: t('networth.liabilities'), value: Math.round(totalLiabilities * 100) / 100 },
+  ], [t, totalAssets, totalLiabilities])
 
   const handleSubmit = async (payload) => {
     if (modal.entry) {
@@ -42,14 +44,14 @@ export default function NetWorth() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Net Worth</h1>
-          <p className="text-sm text-muted">Manually tracked assets and liabilities</p>
+          <h1 className="text-2xl font-bold text-ink">{t('networth.title')}</h1>
+          <p className="text-sm text-muted">{t('networth.subtitle')}</p>
         </div>
         <button
           onClick={modal.openAdd}
           className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
         >
-          + Add account
+          + {t('networth.addAccount')}
         </button>
       </div>
 
@@ -65,15 +67,15 @@ export default function NetWorth() {
         ) : (
           <>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Total assets</p>
+              <p className="text-sm font-medium text-muted">{t('networth.totalAssets')}</p>
               <p className="mt-2 text-2xl font-bold text-income">{formatCurrency(totalAssets)}</p>
             </div>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Total liabilities</p>
+              <p className="text-sm font-medium text-muted">{t('networth.totalLiabilities')}</p>
               <p className="mt-2 text-2xl font-bold text-expense">{formatCurrency(totalLiabilities)}</p>
             </div>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Net worth</p>
+              <p className="text-sm font-medium text-muted">{t('networth.netWorth')}</p>
               <p className={`mt-2 text-2xl font-bold ${netWorth >= 0 ? 'text-savings' : 'text-expense'}`}>
                 {formatCurrency(netWorth)}
               </p>
@@ -83,7 +85,7 @@ export default function NetWorth() {
       </div>
 
       <div className="rounded-xl border border-card-border bg-card p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Assets vs Liabilities</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t('networth.assetsVsLiabilities')}</h2>
         {loading ? (
           <SkeletonChart height={200} />
         ) : (
@@ -104,13 +106,13 @@ export default function NetWorth() {
 
       <div className="rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">Assets</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('networth.assets')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : assets.length === 0 ? (
           <div className="p-5">
-            <EmptyState icon="💰" title="No assets yet" message="e.g. checking, savings, investments, property." />
+            <EmptyState icon="💰" title={t('networth.noAssets')} message="e.g. checking, savings, investments, property." />
           </div>
         ) : (
           assets.map((account) => (
@@ -121,13 +123,13 @@ export default function NetWorth() {
 
       <div className="rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">Liabilities</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('networth.liabilities')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : liabilities.length === 0 ? (
           <div className="p-5">
-            <EmptyState icon="🏦" title="No liabilities yet" message="e.g. mortgage, car loan, credit card balance." />
+            <EmptyState icon="🏦" title={t('networth.noLiabilities')} message="e.g. mortgage, car loan, credit card balance." />
           </div>
         ) : (
           liabilities.map((account) => (

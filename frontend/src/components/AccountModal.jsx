@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ACCOUNT_CATEGORIES } from '../constants/accountCategories'
 
 export default function AccountModal({ open, entry, onClose, onSubmit }) {
+  const { t } = useTranslation()
   const isEdit = Boolean(entry)
   const [name, setName] = useState('')
   const [type, setType] = useState('asset')
@@ -60,7 +62,9 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">{isEdit ? 'Edit account' : 'Add account'}</h2>
+          <h2 className="text-lg font-semibold text-ink">
+            {isEdit ? t('networth.editAccount') : t('networth.addAccount')}
+          </h2>
           <button
             onClick={handleClose}
             aria-label="Close"
@@ -72,7 +76,7 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Name</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('networth.accountName')}</label>
             <input
               type="text"
               value={name}
@@ -84,7 +88,7 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-ink">Type</label>
+            <label className="mb-2 block text-sm font-medium text-ink">{t('common.type')}</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -93,7 +97,7 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
                   type === 'asset' ? 'border-income bg-income/10 text-income' : 'border-card-border text-muted hover:border-income/40'
                 }`}
               >
-                Asset
+                {t('networth.asset')}
               </button>
               <button
                 type="button"
@@ -102,13 +106,13 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
                   type === 'liability' ? 'border-expense bg-expense/10 text-expense' : 'border-card-border text-muted hover:border-expense/40'
                 }`}
               >
-                Liability
+                {t('networth.liability')}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Category</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.category')}</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -123,7 +127,7 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Balance</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('networth.balance')}</label>
             <input
               type="number"
               step="0.01"
@@ -133,9 +137,7 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
               placeholder="0.00"
               className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
-            <p className="mt-1 text-xs text-muted">
-              Always a positive number - liabilities are subtracted automatically.
-            </p>
+            <p className="mt-1 text-xs text-muted">{t('networth.balanceHint')}</p>
           </div>
 
           {error && <p className="text-sm text-expense">{error}</p>}
@@ -146,14 +148,14 @@ export default function AccountModal({ open, entry, onClose, onSubmit }) {
               onClick={handleClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-card-border"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
             >
-              {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add account'}
+              {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('networth.addAccount')}
             </button>
           </div>
         </form>

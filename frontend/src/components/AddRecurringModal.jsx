@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CATEGORIES, getCategoriesByGroup, getCategoryMeta } from '../constants/categories'
 import { INCOME_SOURCES, getIncomeSourceMeta } from '../constants/incomeSources'
 
 export default function AddRecurringModal({ open, entry, defaults, onClose, onSubmit }) {
+  const { t } = useTranslation()
   const isEdit = Boolean(entry)
   const [type, setType] = useState('expense')
   const [description, setDescription] = useState('')
@@ -79,7 +81,9 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">{isEdit ? 'Edit recurring entry' : 'Add recurring entry'}</h2>
+          <h2 className="text-lg font-semibold text-ink">
+            {isEdit ? t('recurring.editEntry') : t('recurring.addEntry')}
+          </h2>
           <button
             onClick={handleClose}
             aria-label="Close"
@@ -91,7 +95,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-ink">Type</label>
+            <label className="mb-2 block text-sm font-medium text-ink">{t('common.type')}</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -100,7 +104,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
                   type === 'expense' ? 'border-accent bg-accent/10 text-accent' : 'border-card-border text-muted hover:border-accent/40'
                 }`}
               >
-                Expense
+                {t('recurring.expense')}
               </button>
               <button
                 type="button"
@@ -109,13 +113,13 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
                   type === 'income' ? 'border-accent bg-accent/10 text-accent' : 'border-card-border text-muted hover:border-accent/40'
                 }`}
               >
-                Income
+                {t('recurring.incomeType')}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Description (optional)</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.descriptionOptional')}</label>
             <input
               type="text"
               value={description}
@@ -127,7 +131,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Amount</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.amount')}</label>
             <input
               type="number"
               step="0.01"
@@ -141,7 +145,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
 
           {type === 'expense' ? (
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink">Category</label>
+              <label className="mb-1 block text-sm font-medium text-ink">{t('common.category')}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -163,7 +167,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
             </div>
           ) : (
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink">Source</label>
+              <label className="mb-1 block text-sm font-medium text-ink">{t('common.source')}</label>
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
@@ -182,7 +186,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Day of month</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('recurring.dayOfMonth')}</label>
             <input
               type="number"
               min="1"
@@ -191,7 +195,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
               onChange={(e) => setDayOfMonth(e.target.value)}
               className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
-            <p className="mt-1 text-xs text-muted">Capped at 1–28 so it always exists, even in February.</p>
+            <p className="mt-1 text-xs text-muted">{t('recurring.dayOfMonthHint')}</p>
           </div>
 
           <label className="flex items-center gap-2 text-sm font-medium text-ink">
@@ -201,7 +205,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
               onChange={(e) => setActive(e.target.checked)}
               className="h-4 w-4 rounded border-card-border text-accent focus:ring-accent/20"
             />
-            Active
+            {t('recurring.active')}
           </label>
 
           {type === 'expense' && (
@@ -212,7 +216,7 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
                 onChange={(e) => setIsSubscription(e.target.checked)}
                 className="h-4 w-4 rounded border-card-border text-accent focus:ring-accent/20"
               />
-              Is this a subscription?
+              {t('recurring.isSubscription')}
             </label>
           )}
 
@@ -224,14 +228,14 @@ export default function AddRecurringModal({ open, entry, defaults, onClose, onSu
               onClick={handleClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-card-border"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
             >
-              {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add recurring'}
+              {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('recurring.addEntry')}
             </button>
           </div>
         </form>

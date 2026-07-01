@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import AddExpenseModal from '../components/AddExpenseModal'
 import EmptyState from '../components/EmptyState'
 import LoadingSkeleton from '../components/LoadingSkeleton'
@@ -12,6 +13,7 @@ import { parseDateOnly } from '../utils/format'
 const PAGE_SIZE = 10
 
 export default function Transactions() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { expenses, loading, error, update, remove } = useExpenses()
   const [search, setSearch] = useState('')
@@ -42,8 +44,8 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-ink">Transactions</h1>
-        <p className="text-sm text-muted">{filtered.length} matching transactions</p>
+        <h1 className="text-2xl font-bold text-ink">{t('expenses.title')}</h1>
+        <p className="text-sm text-muted">{t('expenses.matchingCount', { count: filtered.length })}</p>
       </div>
 
       <div className="flex flex-col gap-3 rounded-xl border border-card-border bg-card p-4 sm:flex-row sm:items-center">
@@ -51,7 +53,7 @@ export default function Transactions() {
           type="text"
           value={search}
           onChange={(e) => updateFilter(setSearch)(e.target.value)}
-          placeholder="Search description…"
+          placeholder={t('expenses.search')}
           className="flex-1 rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
 
@@ -60,7 +62,7 @@ export default function Transactions() {
           onChange={(e) => updateFilter(setCategory)(e.target.value)}
           className="rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         >
-          <option value="all">All categories</option>
+          <option value="all">{t('expenses.allCategories')}</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {getCategoryMeta(c).icon} {getCategoryMeta(c).label}
@@ -74,7 +76,7 @@ export default function Transactions() {
           onChange={(e) => updateFilter(setStartDate)(e.target.value)}
           className="rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
-        <span className="text-sm text-muted">to</span>
+        <span className="text-sm text-muted">{t('expenses.dateTo')}</span>
         <input
           type="date"
           value={endDate}
@@ -94,7 +96,7 @@ export default function Transactions() {
           <LoadingSkeleton rows={10} />
         ) : paged.length === 0 ? (
           <div className="p-5">
-            <EmptyState icon="🔍" title="No transactions found" message="Try adjusting your filters." />
+            <EmptyState icon="🔍" title={t('expenses.noTransactions')} message={t('expenses.adjustFilters')} />
           </div>
         ) : (
           paged.map((expense) => (
@@ -105,23 +107,21 @@ export default function Transactions() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-muted">
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
+          <span>{t('expenses.page', { current: currentPage, total: totalPages })}</span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
               className="rounded-lg border border-card-border px-3 py-1.5 text-ink disabled:opacity-40"
             >
-              Previous
+              {t('expenses.previous')}
             </button>
             <button
               onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="rounded-lg border border-card-border px-3 py-1.5 text-ink disabled:opacity-40"
             >
-              Next
+              {t('expenses.next')}
             </button>
           </div>
         </div>

@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { getCategoryMeta } from '../constants/categories'
 import { getIncomeSourceMeta } from '../constants/incomeSources'
 import { formatCurrency } from '../utils/format'
 
 export default function RecurringRow({ entry, onToggleActive, onEdit, onDelete }) {
+  const { t } = useTranslation()
   const meta = entry.type === 'expense' ? getCategoryMeta(entry.category) : getIncomeSourceMeta(entry.source)
   const label = entry.description?.trim() || meta.label
 
@@ -27,7 +29,7 @@ export default function RecurringRow({ entry, onToggleActive, onEdit, onDelete }
               </span>
             )}
           </p>
-          <p className="text-xs text-muted">Day {entry.day_of_month} of every month</p>
+          <p className="text-xs text-muted">{t('recurring.dayOfEveryMonth', { day: entry.day_of_month })}</p>
         </div>
       </div>
 

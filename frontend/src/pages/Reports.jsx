@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import EmptyState from '../components/EmptyState'
 import { SkeletonCard } from '../components/LoadingSkeleton'
 import { CATEGORIES, getCategoryMeta } from '../constants/categories'
@@ -7,6 +8,7 @@ import useExpenses from '../hooks/useExpenses'
 import { formatCurrency, isSameMonth, monthLabel } from '../utils/format'
 
 export default function Reports() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { expenses, loading } = useExpenses()
   const [month, setMonth] = useState(() => {
@@ -52,8 +54,8 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Reports</h1>
-          <p className="text-sm text-muted">Monthly summary</p>
+          <h1 className="text-2xl font-bold text-ink">{t('reports.title')}</h1>
+          <p className="text-sm text-muted">{t('reports.subtitle')}</p>
         </div>
         <div className="flex items-center gap-1 rounded-lg border border-card-border bg-card px-2 py-1.5">
           <button onClick={() => shiftMonth(-1)} className="rounded-md p-1 text-muted hover:bg-card-border">
@@ -72,15 +74,15 @@ export default function Reports() {
         ) : (
           <>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Total spent</p>
+              <p className="text-sm font-medium text-muted">{t('reports.totalSpent')}</p>
               <p className="mt-2 text-2xl font-bold text-ink">{formatCurrency(totalSpent)}</p>
             </div>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">Transactions</p>
+              <p className="text-sm font-medium text-muted">{t('reports.transactions')}</p>
               <p className="mt-2 text-2xl font-bold text-ink">{monthExpenses.length}</p>
             </div>
             <div className="rounded-xl border border-card-border bg-card p-5">
-              <p className="text-sm font-medium text-muted">vs. {monthLabel(previousMonth).split(' ')[0]}</p>
+              <p className="text-sm font-medium text-muted">{t('reports.vs', { month: monthLabel(previousMonth).split(' ')[0] })}</p>
               <p
                 className={`mt-2 text-2xl font-bold ${
                   delta === null ? 'text-ink' : delta > 0 ? 'text-expense' : 'text-income'
@@ -95,21 +97,21 @@ export default function Reports() {
 
       <div className="overflow-hidden rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">Category breakdown</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('reports.categoryBreakdown')}</h2>
         </div>
         {loading ? (
-          <div className="p-5 text-sm text-muted">Loading…</div>
+          <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
         ) : totalSpent === 0 ? (
           <div className="p-5">
-            <EmptyState icon="📄" title="No expenses this month" />
+            <EmptyState icon="📄" title={t('reports.noExpenses')} />
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-card-border text-left text-xs uppercase tracking-wide text-muted">
-                <th className="px-5 py-3">Category</th>
-                <th className="px-5 py-3">Amount</th>
-                <th className="px-5 py-3">Share</th>
+                <th className="px-5 py-3">{t('reports.category')}</th>
+                <th className="px-5 py-3">{t('reports.amount')}</th>
+                <th className="px-5 py-3">{t('reports.share')}</th>
               </tr>
             </thead>
             <tbody>
