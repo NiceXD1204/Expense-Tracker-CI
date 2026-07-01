@@ -33,6 +33,7 @@ _NEW_COLUMNS = {
     ],
     "budget_settings": [
         ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
     "accounts": [
         ("user_id", "INTEGER"),

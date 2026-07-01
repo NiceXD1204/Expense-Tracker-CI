@@ -118,8 +118,13 @@ Instrumentator().instrument(app).expose(app)
 
 def _get_settings(db: Session, user: Optional[models.User] = None) -> models.BudgetSettings:
     q = db.query(models.BudgetSettings)
+    settings = None
     if user:
-        settings = q.filter(models.BudgetSettings.user_id == user.id).first()
+        # Household members share one budget-settings row (stamped with household_id).
+        if user.household_id:
+            settings = q.filter(models.BudgetSettings.household_id == user.household_id).first()
+        if settings is None:
+            settings = q.filter(models.BudgetSettings.user_id == user.id).first()
     else:
         settings = q.first()
     if settings is None:
@@ -127,6 +132,7 @@ def _get_settings(db: Session, user: Optional[models.User] = None) -> models.Bud
             monthly_savings_goal=0.0,
             monthly_spending_limit=0.0,
             user_id=user.id if user else None,
+            household_id=user.household_id if user else None,
         )
         db.add(settings)
         db.commit()

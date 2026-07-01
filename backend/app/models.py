@@ -74,6 +74,7 @@ class BudgetSettings(Base):
     monthly_savings_goal = Column(Float, nullable=False, default=0.0)
     monthly_spending_limit = Column(Float, nullable=False, default=0.0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
 
 
 class RecurringEntry(Base):
