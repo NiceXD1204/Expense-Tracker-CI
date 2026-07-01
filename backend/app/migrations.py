@@ -2,11 +2,10 @@
 
 `Base.metadata.create_all()` (used in main.py's lifespan) only creates tables
 that don't exist yet - it never adds new columns to a table that's already
-there. Since this project intentionally has no Alembic/migration framework
-(see models.py docstring), this module does the one thing that needs doing
-by hand: add newly-introduced columns to already-existing tables, then
-backfill sensible values into them, so existing local/docker-compose data
-keeps working after a model change.
+there. This module does the one thing that needs doing by hand: add
+newly-introduced columns to already-existing tables, then backfill sensible
+values into them, so existing local/docker-compose data keeps working after a
+model change.
 """
 
 from datetime import datetime, timezone
@@ -18,13 +17,26 @@ _NEW_COLUMNS = {
     "expenses": [
         ("date", "DATE"),
         ("recurring_id", "INTEGER"),
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
     "income": [
         ("date", "DATE"),
         ("recurring_id", "INTEGER"),
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
     "recurring_entries": [
         ("is_subscription", "BOOLEAN"),
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
+    ],
+    "budget_settings": [
+        ("user_id", "INTEGER"),
+    ],
+    "accounts": [
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
 }
 

@@ -4,6 +4,9 @@ sqlalchemy==2.0.40
 psycopg2-binary==2.9.10
 pydantic==2.11.4
 prometheus-fastapi-instrumentator==7.0.2
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.9
 
 # dev/test
 pytest==8.3.5

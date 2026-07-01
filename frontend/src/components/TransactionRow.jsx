@@ -22,6 +22,9 @@ export default function TransactionRow({ expense, onEdit, onDelete }) {
                 <RepeatIcon />
               </span>
             )}
+            {expense.household_id != null && (
+              <span title="Shared with household" className="text-xs text-accent">👥</span>
+            )}
           </p>
           <p className="text-xs text-muted">{formatNiceDate(expense.date)}</p>
         </div>

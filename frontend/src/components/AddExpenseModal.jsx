@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CATEGORIES, getCategoriesByGroup, getCategoryMeta } from '../constants/categories'
+import { useAuth } from '../context/AuthContext'
 import { toDateInputValue } from '../utils/format'
 
 export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
+  const { t } = useTranslation()
+  const { user } = useAuth()
   const isEdit = Boolean(entry)
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(CATEGORIES[0])
   const [date, setDate] = useState(() => toDateInputValue())
+  const [isShared, setIsShared] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -18,11 +23,13 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
       setAmount(String(entry.amount))
       setCategory(entry.category)
       setDate(toDateInputValue(entry.date))
+      setIsShared(Boolean(entry.household_id))
     } else {
       setDescription('')
       setAmount('')
       setCategory(CATEGORIES[0])
       setDate(toDateInputValue())
+      setIsShared(false)
     }
     setError(null)
   }, [open, entry])
@@ -44,7 +51,7 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
     setSubmitting(true)
     setError(null)
     try {
-      await onSubmit({ description: description.trim(), amount: parsedAmount, category, date })
+      await onSubmit({ description: description.trim(), amount: parsedAmount, category, date, is_shared: isShared })
       handleClose()
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Failed to save expense. Please try again.')
@@ -57,7 +64,9 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">{isEdit ? 'Edit expense' : 'Add expense'}</h2>
+          <h2 className="text-lg font-semibold text-ink">
+            {isEdit ? t('common.editExpense') : t('common.addExpense')}
+          </h2>
           <button
             onClick={handleClose}
             aria-label="Close"
@@ -69,7 +78,9 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Description (optional)</label>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              {t('common.descriptionOptional')}
+            </label>
             <input
               type="text"
               value={description}
@@ -81,7 +92,7 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Amount</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.amount')}</label>
             <input
               type="number"
               step="0.01"
@@ -94,7 +105,7 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Category</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.category')}</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -116,7 +127,7 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Date</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.date')}</label>
             <input
               type="date"
               value={date}
@@ -124,6 +135,38 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
               className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </div>
+
+          {user?.household_id && !isEdit && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-ink">
+                {t('common.visibility')}
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsShared(false)}
+                  className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors ${
+                    !isShared
+                      ? 'border-accent bg-accent text-white'
+                      : 'border-card-border text-muted hover:border-accent/40'
+                  }`}
+                >
+                  🔒 {t('common.personal')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsShared(true)}
+                  className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors ${
+                    isShared
+                      ? 'border-accent bg-accent text-white'
+                      : 'border-card-border text-muted hover:border-accent/40'
+                  }`}
+                >
+                  👥 {t('common.shared')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-sm text-expense">{error}</p>}
 
@@ -133,14 +176,14 @@ export default function AddExpenseModal({ open, entry, onClose, onSubmit }) {
               onClick={handleClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-card-border"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
             >
-              {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add expense'}
+              {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('common.addExpense')}
             </button>
           </div>
         </form>

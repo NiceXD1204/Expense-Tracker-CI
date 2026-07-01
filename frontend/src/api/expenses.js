@@ -5,6 +5,12 @@ const api = axios.create({
   timeout: 8000,
 })
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
 export async function getExpenses() {
   const { data } = await api.get('/expenses')
   return data
