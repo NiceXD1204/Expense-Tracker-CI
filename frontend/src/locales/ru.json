@@ -29,7 +29,9 @@
     "loginBtn": "Войти",
     "registerBtn": "Создать аккаунт",
     "invalidCredentials": "Неверный email или пароль",
-    "forgotPassword": "Забыли пароль?"
+    "forgotPassword": "Забыли пароль?",
+    "inviteCode": "Код приглашения в семью",
+    "inviteCodeHint": "Есть код от партнёра? Введите его, чтобы присоединиться к его семье"
   },
   "common": {
     "add": "Добавить",

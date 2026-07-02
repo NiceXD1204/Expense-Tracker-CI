@@ -29,7 +29,9 @@
     "loginBtn": "Se connecter",
     "registerBtn": "Créer un compte",
     "invalidCredentials": "Email ou mot de passe invalide",
-    "forgotPassword": "Mot de passe oublié ?"
+    "forgotPassword": "Mot de passe oublié ?",
+    "inviteCode": "Code d'invitation au foyer",
+    "inviteCodeHint": "Vous avez un code d'un partenaire ? Entrez-le pour rejoindre son foyer"
   },
   "common": {
     "add": "Ajouter",

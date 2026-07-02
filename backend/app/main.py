@@ -220,12 +220,20 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    household = None
+    if payload.invite_code:
+        household = db.query(models.Household).filter(models.Household.invite_code == payload.invite_code.strip()).first()
+        if not household:
+            raise HTTPException(status_code=400, detail="Invalid invite code")
+
     user = models.User(
         email=payload.email,
         hashed_password=hash_password(payload.password),
         display_name=payload.display_name or payload.email.split("@")[0],
         security_question=payload.security_question,
         security_answer_hash=hash_password(payload.security_answer.strip().lower()) if payload.security_answer else None,
+        household_id=household.id if household else None,
     )
     db.add(user)
     db.commit()

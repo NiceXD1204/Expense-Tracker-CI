@@ -29,7 +29,9 @@
     "loginBtn": "התחבר",
     "registerBtn": "צור חשבון",
     "invalidCredentials": "אימייל או סיסמה שגויים",
-    "forgotPassword": "שכחת סיסמה?"
+    "forgotPassword": "שכחת סיסמה?",
+    "inviteCode": "קוד הזמנה למשק בית",
+    "inviteCodeHint": "יש לך קוד מבן/בת הזוג? הזן אותו כדי להצטרף למשק הבית שלהם"
   },
   "common": {
     "add": "הוסף",

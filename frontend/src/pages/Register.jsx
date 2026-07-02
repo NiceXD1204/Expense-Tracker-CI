@@ -21,6 +21,7 @@ export default function Register() {
   const [displayName, setDisplayName] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState('')
   const [securityAnswer, setSecurityAnswer] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -29,7 +30,7 @@ export default function Register() {
     setError('')
     setLoading(true)
     try {
-      await register(email, password, displayName, securityQuestion, securityAnswer)
+      await register(email, password, displayName, securityQuestion, securityAnswer, inviteCode.trim())
       navigate('/dashboard')
     } catch (err) {
       setError(err?.response?.data?.detail || 'Registration failed')
@@ -112,6 +113,19 @@ export default function Register() {
               <p className="mt-0.5 text-xs text-muted">{t('security.answerNote')}</p>
             </div>
           )}
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              {t('auth.inviteCode')} <span className="text-xs text-muted">({t('common.optional')})</span>
+            </label>
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              placeholder={t('auth.inviteCodeHint')}
+              className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+            />
+          </div>
 
           <button
             type="submit"

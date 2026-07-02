@@ -29,7 +29,9 @@
     "loginBtn": "登录",
     "registerBtn": "创建账户",
     "invalidCredentials": "邮箱或密码错误",
-    "forgotPassword": "忘记密码？"
+    "forgotPassword": "忘记密码？",
+    "inviteCode": "家庭邀请码",
+    "inviteCodeHint": "有伴侣提供的邀请码吗？输入以加入他们的家庭"
   },
   "common": {
     "add": "添加",

@@ -29,7 +29,9 @@
     "loginBtn": "تسجيل الدخول",
     "registerBtn": "إنشاء حساب",
     "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة",
-    "forgotPassword": "نسيت كلمة المرور؟"
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "inviteCode": "كود دعوة الأسرة",
+    "inviteCodeHint": "هل لديك كود من شريك؟ أدخله للانضمام إلى أسرته"
   },
   "common": {
     "add": "إضافة",

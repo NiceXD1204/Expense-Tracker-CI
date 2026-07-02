@@ -42,13 +42,14 @@ export function AuthProvider({ children }) {
     return me.data
   }
 
-  const register = async (email, password, displayName, securityQuestion, securityAnswer) => {
+  const register = async (email, password, displayName, securityQuestion, securityAnswer, inviteCode) => {
     await axios.post(`${BASE}/auth/register`, {
       email,
       password,
       display_name: displayName,
       security_question: securityQuestion || undefined,
       security_answer: securityAnswer || undefined,
+      invite_code: inviteCode || undefined,
     })
     return login(email, password, false)
   }

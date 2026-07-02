@@ -23,6 +23,7 @@ class UserRegister(BaseModel):
     display_name: str = Field(default="", max_length=100)
     security_question: Optional[str] = Field(default=None, max_length=200)
     security_answer: Optional[str] = Field(default=None, max_length=200)
+    invite_code: Optional[str] = Field(default=None, max_length=50)
 
 
 class UserLogin(BaseModel):

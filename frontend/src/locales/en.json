@@ -29,7 +29,9 @@
     "loginBtn": "Sign in",
     "registerBtn": "Create account",
     "invalidCredentials": "Invalid email or password",
-    "forgotPassword": "Forgot password?"
+    "forgotPassword": "Forgot password?",
+    "inviteCode": "Household invite code",
+    "inviteCodeHint": "Have a code from a partner? Enter it to join their household"
   },
   "common": {
     "add": "Add",
