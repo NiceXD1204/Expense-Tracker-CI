@@ -16,6 +16,7 @@ from .database import SessionLocal, engine, get_db
 from .migrations import (
     backfill_dates,
     backfill_household_history_access,
+    backfill_share_household_data,
     backfill_subscription_flag,
     ensure_schema,
 )
@@ -100,6 +101,7 @@ async def lifespan(app: FastAPI):
     backfill_dates(SessionLocal, models)
     backfill_subscription_flag(SessionLocal, models)
     backfill_household_history_access(SessionLocal, models)
+    backfill_share_household_data(SessionLocal, models)
 
     db = SessionLocal()
     try:
@@ -356,6 +358,7 @@ def create_household(
     db.commit()
     db.refresh(household)
     db.refresh(current_user)
+    backfill_share_household_data(SessionLocal, models)
     return household
 
 
@@ -375,6 +378,7 @@ def join_household(
     current_user.can_view_history = True
     db.commit()
     db.refresh(household)
+    backfill_share_household_data(SessionLocal, models)
     return household
 
 

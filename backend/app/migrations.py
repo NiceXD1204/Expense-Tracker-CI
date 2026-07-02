@@ -104,6 +104,46 @@ def backfill_subscription_flag(session_factory, models) -> None:
         db.close()
 
 
+def backfill_share_household_data(session_factory, models) -> None:
+    """Stamping household_id only ever happened at create/edit time, so any
+    row a household member created before they joined (or before the
+    household even existed) was never shared - it's still sitting there as a
+    private row with household_id NULL, invisible to the rest of the
+    household no matter what their can_view_history says. Retroactively
+    share every current household member's own pre-existing rows into their
+    household. Idempotent: only touches rows still unstamped
+    (household_id IS NULL), so running this repeatedly - on every app
+    startup, and again after every join/create - never re-touches a row
+    that's already shared and never duplicates or drops anything."""
+    db = session_factory()
+    try:
+        changed = False
+        entry_models = [
+            models.Expense,
+            models.Income,
+            models.RecurringEntry,
+            models.Account,
+            models.InvestmentFund,
+            models.CategoryBudget,
+            models.BudgetSettings,
+        ]
+        members = db.query(models.User).filter(models.User.household_id.isnot(None)).all()
+        for member in members:
+            for model in entry_models:
+                rows = (
+                    db.query(model)
+                    .filter(model.user_id == member.id, model.household_id.is_(None))
+                    .all()
+                )
+                for row in rows:
+                    row.household_id = member.household_id
+                    changed = True
+        if changed:
+            db.commit()
+    finally:
+        db.close()
+
+
 def backfill_household_history_access(session_factory, models) -> None:
     """Give every pre-existing user an explicit can_view_history (default
     True - they already had full access before this feature existed) instead
