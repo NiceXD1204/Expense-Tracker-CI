@@ -33,6 +33,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- if .Values.envSecretName }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.envSecretName }}
+          {{- end }}
           {{- if .Values.env }}
           env:
             {{- range $key, $value := .Values.env }}
