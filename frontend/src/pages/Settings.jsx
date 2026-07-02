@@ -103,6 +103,25 @@ export default function Settings() {
     }
   }
 
+  const toggleHistoryAccess = async (memberId, canViewHistory) => {
+    setHouseholdError('')
+    // Optimistic update so the checkbox responds instantly.
+    setHousehold((h) => ({
+      ...h,
+      members: h.members.map((m) => (m.id === memberId ? { ...m, can_view_history: canViewHistory } : m)),
+    }))
+    try {
+      await api.put(`/household/members/${memberId}/history-access`, { can_view_history: canViewHistory })
+    } catch (e) {
+      setHouseholdError(e.response?.data?.detail || 'Error updating history access')
+      // Revert on failure.
+      setHousehold((h) => ({
+        ...h,
+        members: h.members.map((m) => (m.id === memberId ? { ...m, can_view_history: !canViewHistory } : m)),
+      }))
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -215,12 +234,23 @@ export default function Settings() {
                       {m.display_name || m.email}
                     </div>
                     {user?.id === household.created_by && m.id !== household.created_by && (
-                      <button
-                        onClick={() => kickMember(m.id)}
-                        className="text-xs font-medium text-red-500 hover:underline"
-                      >
-                        {t('settings.removeMember')}
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+                          <input
+                            type="checkbox"
+                            checked={!!m.can_view_history}
+                            onChange={(e) => toggleHistoryAccess(m.id, e.target.checked)}
+                            className="rounded"
+                          />
+                          {t('settings.canViewHistory')}
+                        </label>
+                        <button
+                          onClick={() => kickMember(m.id)}
+                          className="text-xs font-medium text-red-500 hover:underline"
+                        >
+                          {t('settings.removeMember')}
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}

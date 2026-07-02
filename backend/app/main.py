@@ -7,13 +7,18 @@ from typing import Optional
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .auth import get_current_user, get_optional_user, hash_password, verify_password, create_access_token
 from .database import SessionLocal, engine, get_db
-from .migrations import backfill_dates, backfill_subscription_flag, ensure_schema
+from .migrations import (
+    backfill_dates,
+    backfill_household_history_access,
+    backfill_subscription_flag,
+    ensure_schema,
+)
 
 
 def generate_recurring_for_month(db: Session, year: int, month: int) -> int:
@@ -94,6 +99,7 @@ async def lifespan(app: FastAPI):
     models.Base.metadata.create_all(bind=engine)
     backfill_dates(SessionLocal, models)
     backfill_subscription_flag(SessionLocal, models)
+    backfill_household_history_access(SessionLocal, models)
 
     db = SessionLocal()
     try:
@@ -158,17 +164,26 @@ def _income_by_source(db: Session, user: Optional[models.User] = None) -> schema
 
 def _apply_visibility_filter(query, model, user: Optional[models.User]):
     """Filter rows visible to the current user: own rows + household shared rows.
-    When unauthenticated (user=None), all rows are returned for backward-compat."""
+    When unauthenticated (user=None), all rows are returned for backward-compat.
+
+    A household member whose can_view_history is False only sees shared rows
+    created on/after the day they joined - older household history stays
+    hidden from them until the creator turns it back on. The creator's own
+    can_view_history is never toggled off, so they always see everything."""
     if user is None:
         return query
     conditions = [model.user_id == user.id, model.user_id.is_(None)]
     if user.household_id:
-        conditions.append(model.household_id == user.household_id)
+        household_cond = model.household_id == user.household_id
+        if not user.can_view_history and user.household_joined_at:
+            household_cond = and_(household_cond, model.created_at >= user.household_joined_at)
+        conditions.append(household_cond)
     return query.filter(or_(*conditions))
 
 
 def _check_ownership(entry, user: Optional[models.User]) -> None:
-    """Raise 403 if the authenticated user doesn't own or share this entry."""
+    """Raise 403 if the authenticated user doesn't own or share this entry, or
+    (for household-shared entries) if it predates their history access."""
     if user is None:
         return
     if entry.user_id is None:
@@ -176,7 +191,11 @@ def _check_ownership(entry, user: Optional[models.User]) -> None:
     if entry.user_id == user.id:
         return
     if user.household_id and entry.household_id == user.household_id:
-        return
+        if user.can_view_history or not user.household_joined_at:
+            return
+        entry_created_at = getattr(entry, "created_at", None)
+        if entry_created_at is not None and entry_created_at >= user.household_joined_at:
+            return
     raise HTTPException(status_code=403, detail="Not authorized to modify this entry")
 
 
@@ -234,6 +253,8 @@ def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
         security_question=payload.security_question,
         security_answer_hash=hash_password(payload.security_answer.strip().lower()) if payload.security_answer else None,
         household_id=household.id if household else None,
+        household_joined_at=datetime.now(timezone.utc) if household else None,
+        can_view_history=True,
     )
     db.add(user)
     db.commit()
@@ -330,6 +351,8 @@ def create_household(
     db.add(household)
     db.flush()
     current_user.household_id = household.id
+    current_user.household_joined_at = datetime.now(timezone.utc)
+    current_user.can_view_history = True
     db.commit()
     db.refresh(household)
     db.refresh(current_user)
@@ -348,6 +371,8 @@ def join_household(
     if not household:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     current_user.household_id = household.id
+    current_user.household_joined_at = datetime.now(timezone.utc)
+    current_user.can_view_history = True
     db.commit()
     db.refresh(household)
     return household
@@ -370,6 +395,8 @@ def leave_household(
     current_user: models.User = Depends(get_current_user),
 ):
     current_user.household_id = None
+    current_user.household_joined_at = None
+    current_user.can_view_history = True
     db.commit()
     return {"message": "Left household"}
 
@@ -407,8 +434,34 @@ def kick_member(
         raise HTTPException(status_code=404, detail="Member not found in this household")
 
     target.household_id = None
+    target.household_joined_at = None
+    target.can_view_history = True
     db.commit()
     return {"message": "Member removed"}
+
+
+@household_router.put("/members/{user_id}/history-access")
+def set_member_history_access(
+    user_id: int,
+    payload: schemas.MemberHistoryAccessUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="Not in a household")
+    household = db.get(models.Household, current_user.household_id)
+    if household is None or household.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the household creator can change this")
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="The creator always has full history access")
+
+    target = db.get(models.User, user_id)
+    if target is None or target.household_id != current_user.household_id:
+        raise HTTPException(status_code=404, detail="Member not found in this household")
+
+    target.can_view_history = payload.can_view_history
+    db.commit()
+    return {"message": "Updated"}
 
 
 app.include_router(household_router)
@@ -679,6 +732,8 @@ def list_category_budgets(
     q = db.query(models.CategoryBudget)
     if current_user and current_user.household_id:
         q = q.filter(models.CategoryBudget.household_id == current_user.household_id)
+        if not current_user.can_view_history and current_user.household_joined_at:
+            q = q.filter(models.CategoryBudget.created_at >= current_user.household_joined_at)
     elif current_user:
         q = q.filter(models.CategoryBudget.user_id == current_user.id)
     else:

@@ -20,6 +20,8 @@ _NEW_COLUMNS = {
         ("first_name", "VARCHAR(100)"),
         ("last_name", "VARCHAR(100)"),
         ("avatar_data", "TEXT"),
+        ("household_joined_at", "TIMESTAMP"),
+        ("can_view_history", "BOOLEAN"),
     ],
     "expenses": [
         ("date", "DATE"),
@@ -97,6 +99,31 @@ def backfill_subscription_flag(session_factory, models) -> None:
         for row in rows:
             row.is_subscription = False
         if rows:
+            db.commit()
+    finally:
+        db.close()
+
+
+def backfill_household_history_access(session_factory, models) -> None:
+    """Give every pre-existing user an explicit can_view_history (default
+    True - they already had full access before this feature existed) instead
+    of leaving it NULL, and a best-guess household_joined_at (their account
+    created_at) for anyone already in a household, so the creator can
+    meaningfully restrict their history access later instead of the toggle
+    silently doing nothing for lack of a join date."""
+    db = session_factory()
+    try:
+        changed = False
+        for row in db.query(models.User).filter(models.User.can_view_history.is_(None)).all():
+            row.can_view_history = True
+            changed = True
+        for row in db.query(models.User).filter(
+            models.User.household_id.isnot(None),
+            models.User.household_joined_at.is_(None),
+        ).all():
+            row.household_joined_at = row.created_at
+            changed = True
+        if changed:
             db.commit()
     finally:
         db.close()

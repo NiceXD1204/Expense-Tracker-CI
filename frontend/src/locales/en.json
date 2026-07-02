@@ -275,6 +275,7 @@
     "copied": "Copied!",
     "copyFailed": "Couldn't copy the code",
     "members": "Members",
+    "canViewHistory": "Can view full history",
     "removeMember": "Remove",
     "removeMemberConfirm": "Remove this member from the household? They will lose access to the household's shared data.",
     "leaveHousehold": "Leave Household",

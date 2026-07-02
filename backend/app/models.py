@@ -34,6 +34,8 @@ class User(Base):
     security_question = Column(String(200), nullable=True)
     security_answer_hash = Column(String(255), nullable=True)
     household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
+    household_joined_at = Column(DateTime, nullable=True)
+    can_view_history = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     household = relationship("Household", foreign_keys=[household_id], backref="members")

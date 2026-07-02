@@ -275,6 +275,7 @@
     "copied": "已复制！",
     "copyFailed": "复制邀请码失败",
     "members": "成员",
+    "canViewHistory": "可查看完整历史记录",
     "removeMember": "移除",
     "removeMemberConfirm": "将此成员从家庭中移除？他们将无法再访问家庭的共享数据。",
     "leaveHousehold": "离开家庭",

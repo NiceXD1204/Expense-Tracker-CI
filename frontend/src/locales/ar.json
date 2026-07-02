@@ -275,6 +275,7 @@
     "copied": "تم النسخ!",
     "copyFailed": "تعذر نسخ الكود",
     "members": "الأعضاء",
+    "canViewHistory": "يمكنه رؤية السجل الكامل",
     "removeMember": "إزالة",
     "removeMemberConfirm": "إزالة هذا العضو من المنزل؟ سيفقد الوصول إلى البيانات المشتركة.",
     "leaveHousehold": "مغادرة المنزل",

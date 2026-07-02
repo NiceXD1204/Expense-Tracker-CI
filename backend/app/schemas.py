@@ -90,6 +90,7 @@ class HouseholdMember(BaseModel):
     id: int
     email: str
     display_name: str
+    can_view_history: bool
 
 
 class HouseholdOut(BaseModel):
@@ -106,6 +107,10 @@ class HouseholdMemberOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     display_name: str
+
+
+class MemberHistoryAccessUpdate(BaseModel):
+    can_view_history: bool
 
 
 # ---------- Investment Funds ----------
