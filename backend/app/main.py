@@ -1,4 +1,5 @@
 import calendar
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
 from typing import Optional
@@ -186,6 +187,20 @@ def _resolve_household(is_shared: bool, user: Optional[models.User]) -> Optional
     return None
 
 
+_reset_attempts: dict = defaultdict(list)
+
+
+def _check_reset_rate_limit(email: str) -> bool:
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(minutes=15)
+    _reset_attempts[email] = [t for t in _reset_attempts[email] if t > cutoff]
+    if len(_reset_attempts[email]) >= 5:
+        return False
+    _reset_attempts[email].append(now)
+    return True
+
+
 # ---------- Healthcheck ----------
 
 
@@ -208,6 +223,8 @@ def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
         email=payload.email,
         hashed_password=hash_password(payload.password),
         display_name=payload.display_name or payload.email.split("@")[0],
+        security_question=payload.security_question,
+        security_answer_hash=hash_password(payload.security_answer.strip().lower()) if payload.security_answer else None,
     )
     db.add(user)
     db.commit()
@@ -227,6 +244,30 @@ def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
 @auth_router.get("/me", response_model=schemas.UserOut)
 def me(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+
+@auth_router.post("/forgot-password/question")
+def get_forgot_password_question(payload: schemas.ForgotPasswordQuestion, db: Session = Depends(get_db)):
+    """Returns the security question for the email. Always returns 200 with a generic
+    structure to prevent email enumeration attacks."""
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user or not user.security_question:
+        return {"question": None}
+    return {"question": user.security_question}
+
+
+@auth_router.post("/reset-password")
+def reset_password(payload: schemas.ForgotPasswordReset, db: Session = Depends(get_db)):
+    if not _check_reset_rate_limit(payload.email):
+        raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user or not user.security_answer_hash:
+        raise HTTPException(status_code=400, detail="Cannot reset password for this account.")
+    if not verify_password(payload.answer.strip().lower(), user.security_answer_hash):
+        raise HTTPException(status_code=400, detail="Incorrect answer.")
+    user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    return {"detail": "Password reset successfully."}
 
 
 app.include_router(auth_router)

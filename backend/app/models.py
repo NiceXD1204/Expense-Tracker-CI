@@ -28,6 +28,8 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     display_name = Column(String(100), nullable=False, default="")
+    security_question = Column(String(200), nullable=True)
+    security_answer_hash = Column(String(255), nullable=True)
     household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

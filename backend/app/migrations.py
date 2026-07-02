@@ -14,6 +14,10 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
 _NEW_COLUMNS = {
+    "users": [
+        ("security_question", "VARCHAR(200)"),
+        ("security_answer_hash", "VARCHAR(255)"),
+    ],
     "expenses": [
         ("date", "DATE"),
         ("recurring_id", "INTEGER"),

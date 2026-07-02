@@ -3,6 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
+const SECURITY_QUESTION_KEYS = [
+  'security.questions.pet',
+  'security.questions.city',
+  'security.questions.maiden',
+  'security.questions.school',
+  'security.questions.nickname',
+]
+
 export default function Register() {
   const { t } = useTranslation()
   const { register } = useAuth()
@@ -10,6 +18,8 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [securityQuestion, setSecurityQuestion] = useState('')
+  const [securityAnswer, setSecurityAnswer] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -18,7 +28,7 @@ export default function Register() {
     setError('')
     setLoading(true)
     try {
-      await register(email, password, displayName)
+      await register(email, password, displayName, securityQuestion, securityAnswer)
       navigate('/dashboard')
     } catch (err) {
       setError(err?.response?.data?.detail || 'Registration failed')
@@ -75,6 +85,29 @@ export default function Register() {
               className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              {t('security.question')} <span className="text-xs text-muted">({t('common.optional')})</span>
+            </label>
+            <select value={securityQuestion} onChange={(e) => setSecurityQuestion(e.target.value)}
+              className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20">
+              <option value="">— {t('security.selectQuestion')} —</option>
+              {SECURITY_QUESTION_KEYS.map((k) => (
+                <option key={k} value={t(k)}>{t(k)}</option>
+              ))}
+            </select>
+          </div>
+
+          {securityQuestion && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-ink">{t('security.answer')}</label>
+              <input type="text" value={securityAnswer} onChange={(e) => setSecurityAnswer(e.target.value)}
+                placeholder={t('security.answerHint')}
+                className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" />
+              <p className="mt-0.5 text-xs text-muted">{t('security.answerNote')}</p>
+            </div>
+          )}
 
           <button
             type="submit"

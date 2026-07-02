@@ -21,6 +21,8 @@ class UserRegister(BaseModel):
     email: str = Field(..., max_length=255)
     password: str = Field(..., min_length=6)
     display_name: str = Field(default="", max_length=100)
+    security_question: Optional[str] = Field(default=None, max_length=200)
+    security_answer: Optional[str] = Field(default=None, max_length=200)
 
 
 class UserLogin(BaseModel):
@@ -41,7 +43,18 @@ class UserOut(BaseModel):
     email: str
     display_name: str
     household_id: Optional[int] = None
+    security_question: Optional[str] = None
     created_at: datetime
+
+
+class ForgotPasswordQuestion(BaseModel):
+    email: str
+
+
+class ForgotPasswordReset(BaseModel):
+    email: str
+    answer: str = Field(..., min_length=1, max_length=200)
+    new_password: str = Field(..., min_length=6)
 
 
 # ---------- Household schemas ----------

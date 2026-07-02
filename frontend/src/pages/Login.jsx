@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
+
 export default function Login() {
   const { t } = useTranslation()
   const { login } = useAuth()
@@ -71,6 +72,10 @@ export default function Login() {
             />
             {t('auth.rememberMe')}
           </label>
+
+          <p className="text-right">
+            <Link to="/forgot-password" className="text-xs text-accent hover:underline">{t('auth.forgotPassword')}</Link>
+          </p>
 
           <button
             type="submit"

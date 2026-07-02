@@ -8,6 +8,7 @@ import Analytics from './pages/Analytics'
 import Budgets from './pages/Budgets'
 import Dashboard from './pages/Dashboard'
 import Forecast from './pages/Forecast'
+import ForgotPassword from './pages/ForgotPassword'
 import Income from './pages/Income'
 import Login from './pages/Login'
 import NetWorth from './pages/NetWorth'
@@ -45,6 +46,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
         path="/*"
         element={
