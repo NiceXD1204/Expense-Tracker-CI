@@ -7,6 +7,7 @@ import TopBar from './components/TopBar'
 import Analytics from './pages/Analytics'
 import Budgets from './pages/Budgets'
 import Dashboard from './pages/Dashboard'
+import Expenses from './pages/Expenses'
 import Forecast from './pages/Forecast'
 import ForgotPassword from './pages/ForgotPassword'
 import Income from './pages/Income'
@@ -20,7 +21,6 @@ import Register from './pages/Register'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import Subscriptions from './pages/Subscriptions'
-import Transactions from './pages/Transactions'
 
 const RTL_LANGS = ['he', 'ar']
 
@@ -63,10 +63,11 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/expenses" element={<Expenses />} />
                   <Route path="/income" element={<Income />} />
                   <Route path="/recurring" element={<Recurring />} />
                   <Route path="/subscriptions" element={<Subscriptions />} />
-                  <Route path="/transactions" element={<Transactions />} />
+                  <Route path="/transactions" element={<Navigate to="/expenses" replace />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/forecast" element={<Forecast />} />
                   <Route path="/budgets" element={<Budgets />} />

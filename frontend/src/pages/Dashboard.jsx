@@ -27,7 +27,7 @@ import { daysInMonth, formatCurrency, isSameMonth, monthLabel, parseDateOnly } f
 export default function Dashboard() {
   const { t } = useTranslation()
   useCurrencyTick()
-  const { expenses, loading, error, create, update, remove } = useExpenses()
+  const { expenses, loading, error, update, remove } = useExpenses()
   const { income, loading: incomeLoading } = useIncome()
   const { settings: budgetSettings } = useBudgetSettings()
   const { summary: subscriptionsSummary, loading: subscriptionsLoading } = useSubscriptions()
@@ -111,8 +111,6 @@ export default function Dashboard() {
   const handleExpenseSubmit = async (payload) => {
     if (expenseModal.entry) {
       await update(expenseModal.entry.id, payload)
-    } else {
-      await create(payload)
     }
   }
 
@@ -150,13 +148,6 @@ export default function Dashboard() {
               ›
             </button>
           </div>
-
-          <button
-            onClick={expenseModal.openAdd}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
-          >
-            + {t('dashboard.addExpense')}
-          </button>
         </div>
       </div>
 

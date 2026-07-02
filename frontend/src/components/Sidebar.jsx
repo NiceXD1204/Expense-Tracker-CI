@@ -9,10 +9,10 @@ function NavItems({ onClose }) {
 
   const NAV_ITEMS = [
     { to: '/dashboard', labelKey: 'nav.dashboard', icon: IconGrid },
+    { to: '/expenses', labelKey: 'nav.expenses', icon: IconShoppingBag },
     { to: '/income', labelKey: 'nav.income', icon: IconTrendingUp },
     { to: '/recurring', labelKey: 'nav.recurring', icon: IconRepeat },
     { to: '/subscriptions', labelKey: 'nav.subscriptions', icon: IconCreditCard },
-    { to: '/transactions', labelKey: 'nav.transactions', icon: IconList },
     { to: '/analytics', labelKey: 'nav.analytics', icon: IconChart },
     { to: '/forecast', labelKey: 'nav.forecast', icon: IconForecast },
     { to: '/budgets', labelKey: 'nav.budgets', icon: IconWallet },
@@ -164,10 +164,10 @@ function IconLandmark() {
   )
 }
 
-function IconList() {
+function IconShoppingBag() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h10" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
     </svg>
   )
 }
