@@ -26,6 +26,7 @@ export default function Settings() {
   const [newHouseholdName, setNewHouseholdName] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [householdError, setHouseholdError] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
 
   useEffect(() => {
     if (user?.household_id) {
@@ -89,6 +90,16 @@ export default function Settings() {
       setHousehold((h) => ({ ...h, members: h.members.filter((m) => m.id !== memberId) }))
     } catch (e) {
       setHouseholdError(e.response?.data?.detail || 'Error removing member')
+    }
+  }
+
+  const copyInviteCode = async () => {
+    try {
+      await navigator.clipboard.writeText(household.invite_code)
+      setCodeCopied(true)
+      setTimeout(() => setCodeCopied(false), 2000)
+    } catch {
+      setHouseholdError(t('settings.copyFailed'))
     }
   }
 
@@ -180,7 +191,15 @@ export default function Settings() {
 
             <div className="rounded-lg bg-card-border/20 p-3">
               <p className="text-xs text-muted">{t('settings.inviteCode')}</p>
-              <code className="text-sm font-mono font-bold text-ink">{household.invite_code}</code>
+              <div className="flex items-center gap-2">
+                <code className="text-sm font-mono font-bold text-ink">{household.invite_code}</code>
+                <button
+                  onClick={copyInviteCode}
+                  className="rounded-md border border-card-border px-2 py-0.5 text-xs font-medium text-ink hover:bg-card-border"
+                >
+                  {codeCopied ? t('settings.copied') : t('settings.copyCode')}
+                </button>
+              </div>
               <p className="mt-1 text-xs text-muted">{t('settings.inviteCodeHint')}</p>
             </div>
 
