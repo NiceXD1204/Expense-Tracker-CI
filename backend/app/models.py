@@ -82,6 +82,22 @@ class BudgetSettings(Base):
     household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
 
 
+class CategoryBudget(Base):
+    """Per-category budget amount. Shared across a household exactly like
+    BudgetSettings: one row per (owner, category), where owner is a household
+    if the user has one, otherwise the user themself."""
+
+    __tablename__ = "category_budgets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    category = Column(String(50), nullable=False)
+    amount = Column(Float, nullable=False, default=0.0)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
 class RecurringEntry(Base):
     """A template that auto-generates a real Expense/Income row each month."""
 

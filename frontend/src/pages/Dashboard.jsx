@@ -14,6 +14,7 @@ import SavingsProgress from '../components/SavingsProgress'
 import TransactionRow from '../components/TransactionRow'
 import { CATEGORIES } from '../constants/categories'
 import useBudgetSettings from '../hooks/useBudgetSettings'
+import useCategoryBudgets from '../hooks/useCategoryBudgets'
 import useCurrencyTick from '../hooks/useCurrencyTick'
 import useEntryModal from '../hooks/useEntryModal'
 import useExpenses from '../hooks/useExpenses'
@@ -21,7 +22,6 @@ import useIncome from '../hooks/useIncome'
 import useSubscriptions from '../hooks/useSubscriptions'
 import useTheme from '../hooks/useTheme'
 import { getChartTheme } from '../utils/chartTheme'
-import { loadBudgets } from '../utils/budgets'
 import { daysInMonth, formatCurrency, isSameMonth, monthLabel, parseDateOnly } from '../utils/format'
 
 export default function Dashboard() {
@@ -40,7 +40,7 @@ export default function Dashboard() {
   })
   const expenseModal = useEntryModal()
   const [showAllBudgets, setShowAllBudgets] = useState(false)
-  const budgets = loadBudgets()
+  const { budgets } = useCategoryBudgets()
 
   const monthExpenses = useMemo(() => expenses.filter((e) => isSameMonth(e.date, month)), [expenses, month])
   const monthIncome = useMemo(() => income.filter((i) => isSameMonth(i.date, month)), [income, month])

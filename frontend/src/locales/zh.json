@@ -261,7 +261,7 @@
     "backendUrl": "后端地址",
     "categories": "类别",
     "categoriesCount": "7组共40个类别",
-    "localStorageNote": "预算、主题和货币存储在本地，不跨设备共享。",
+    "localStorageNote": "主题、配色方案和货币存储在本地浏览器中，不跨设备共享。",
     "household": "共享账户",
     "householdDesc": "与伴侣或家人共享支出",
     "createHousehold": "创建共享账户",

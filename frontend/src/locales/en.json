@@ -261,7 +261,7 @@
     "backendUrl": "Backend URL",
     "categories": "Categories",
     "categoriesCount": "40 categories across 7 groups",
-    "localStorageNote": "Budgets, theme, color palette, and your selected currency are stored locally in your browser and aren't shared between devices.",
+    "localStorageNote": "Theme, color palette, and your selected currency are stored locally in your browser and aren't shared between devices.",
     "household": "Shared Account",
     "householdDesc": "Share expenses with your partner or family",
     "createHousehold": "Create Shared Account",

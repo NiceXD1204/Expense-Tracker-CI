@@ -640,6 +640,52 @@ def update_budget_settings(
     return settings
 
 
+@app.get("/budgets/categories", response_model=list[schemas.CategoryBudgetOut])
+def list_category_budgets(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    q = db.query(models.CategoryBudget)
+    if current_user and current_user.household_id:
+        q = q.filter(models.CategoryBudget.household_id == current_user.household_id)
+    elif current_user:
+        q = q.filter(models.CategoryBudget.user_id == current_user.id)
+    else:
+        q = q.filter(models.CategoryBudget.user_id.is_(None), models.CategoryBudget.household_id.is_(None))
+    return q.all()
+
+
+@app.put("/budgets/categories", response_model=schemas.CategoryBudgetOut)
+def upsert_category_budget(
+    payload: schemas.CategoryBudgetUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    # Household members share one row per category (stamped with household_id),
+    # same pattern as BudgetSettings, so both partners edit the same numbers.
+    q = db.query(models.CategoryBudget).filter(models.CategoryBudget.category == payload.category)
+    if current_user and current_user.household_id:
+        row = q.filter(models.CategoryBudget.household_id == current_user.household_id).first()
+    elif current_user:
+        row = q.filter(models.CategoryBudget.user_id == current_user.id).first()
+    else:
+        row = q.filter(models.CategoryBudget.user_id.is_(None), models.CategoryBudget.household_id.is_(None)).first()
+
+    if row is None:
+        row = models.CategoryBudget(
+            category=payload.category,
+            amount=payload.amount,
+            user_id=current_user.id if current_user else None,
+            household_id=_household_stamp(current_user),
+        )
+        db.add(row)
+    else:
+        row.amount = payload.amount
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 # ---------- Recurring entries ----------
 
 

@@ -4,10 +4,10 @@ import BudgetBar from '../components/BudgetBar'
 import { CATEGORIES, getCategoryMeta } from '../constants/categories'
 import { getCurrencySymbol, loadCurrency } from '../utils/currency'
 import useBudgetSettings from '../hooks/useBudgetSettings'
+import useCategoryBudgets from '../hooks/useCategoryBudgets'
 import useCurrencyTick from '../hooks/useCurrencyTick'
 import useExpenses from '../hooks/useExpenses'
 import useIncome from '../hooks/useIncome'
-import { loadBudgets, saveBudgets } from '../utils/budgets'
 import { formatCurrency, isSameMonth, monthLabel } from '../utils/format'
 
 export default function Budgets() {
@@ -16,7 +16,7 @@ export default function Budgets() {
   const { expenses, loading } = useExpenses()
   const { income } = useIncome()
   const { settings, loading: settingsLoading, update } = useBudgetSettings()
-  const [budgets, setBudgets] = useState(loadBudgets)
+  const { budgets, update: updateCategoryBudget } = useCategoryBudgets()
   const [savedAt, setSavedAt] = useState(null)
   const [planForm, setPlanForm] = useState({ monthly_savings_goal: 0, monthly_spending_limit: 0 })
   const [planSaving, setPlanSaving] = useState(false)
@@ -41,9 +41,7 @@ export default function Budgets() {
 
   const handleChange = (category, value) => {
     const numeric = Math.max(parseFloat(value) || 0, 0)
-    const next = { ...budgets, [category]: numeric }
-    setBudgets(next)
-    saveBudgets(next)
+    updateCategoryBudget(category, numeric)
     setSavedAt(Date.now())
   }
 

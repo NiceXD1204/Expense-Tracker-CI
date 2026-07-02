@@ -261,7 +261,7 @@
     "backendUrl": "URL du backend",
     "categories": "Catégories",
     "categoriesCount": "40 catégories en 7 groupes",
-    "localStorageNote": "Budget, thème et devise sont stockés localement.",
+    "localStorageNote": "Le thème, la palette de couleurs et la devise sont stockés localement dans votre navigateur et ne sont pas partagés entre appareils.",
     "household": "Compte partagé",
     "householdDesc": "Partagez les dépenses avec votre partenaire ou famille",
     "createHousehold": "Créer un compte partagé",

@@ -255,6 +255,18 @@ class BudgetSettingsUpdate(BaseModel):
     monthly_spending_limit: float = Field(..., ge=0)
 
 
+class CategoryBudgetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    category: str
+    amount: float
+
+
+class CategoryBudgetUpdate(BaseModel):
+    category: str = Field(..., min_length=1, max_length=50)
+    amount: float = Field(..., ge=0)
+
+
 class Overview(BaseModel):
     total_income: float
     income_by_source: IncomeBySource
