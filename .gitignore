@@ -31,3 +31,6 @@ dist/
 .idea/
 .vscode/
 .DS_Store
+
+# Helm dependency archives (regenerable via `helm dependency build` from Chart.lock) - only the lockfile is committed.
+charts/*/charts/*.tgz
