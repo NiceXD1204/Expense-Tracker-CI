@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../api/expenses'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 
 export default function ForgotPassword() {
   const { t } = useTranslation()
@@ -50,7 +51,10 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-page px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-page px-4">
+      <div className="absolute right-4 top-4">
+        <LanguageSwitcher />
+      </div>
       <div className="w-full max-w-md rounded-2xl border border-card-border bg-card p-8 shadow-lg">
         <div className="mb-6 flex items-center gap-2">
           <span className="text-2xl">🔑</span>
