@@ -246,6 +246,36 @@ def me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
+@auth_router.put("/profile", response_model=schemas.UserOut)
+def update_profile(
+    payload: schemas.ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.first_name = payload.first_name
+    current_user.last_name = payload.last_name
+    current_user.display_name = payload.display_name or current_user.display_name
+    if payload.security_question is not None:
+        current_user.security_question = payload.security_question
+    if payload.security_answer:
+        current_user.security_answer_hash = hash_password(payload.security_answer.strip().lower())
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@auth_router.post("/avatar", response_model=schemas.UserOut)
+def update_avatar(
+    payload: schemas.AvatarUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.avatar_data = payload.avatar_data
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 @auth_router.post("/forgot-password/question")
 def get_forgot_password_question(payload: schemas.ForgotPasswordQuestion, db: Session = Depends(get_db)):
     """Returns the security question for the email. Always returns 200 with a generic

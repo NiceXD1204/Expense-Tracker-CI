@@ -19,6 +19,7 @@ function NavItems({ onClose }) {
     { to: '/networth', labelKey: 'nav.networth', icon: IconLandmark },
     { to: '/reports', labelKey: 'nav.reports', icon: IconDocument },
     { to: '/settings', labelKey: 'nav.settings', icon: IconSettings },
+    { to: '/profile', labelKey: 'nav.profile', icon: IconUser },
   ]
 
   return (
@@ -200,6 +201,15 @@ function IconSettings() {
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317a1 1 0 0 1 1.35-1.052l1.06.39a1 1 0 0 1 .65.876l.06 1.122a7.97 7.97 0 0 1 1.61.93l1.06-.39a1 1 0 0 1 1.18.39l.6.99a1 1 0 0 1-.21 1.27l-.85.78c.1.55.1 1.11 0 1.66l.85.78a1 1 0 0 1 .21 1.27l-.6.99a1 1 0 0 1-1.18.39l-1.06-.39c-.49.39-1.03.7-1.61.93l-.06 1.12a1 1 0 0 1-.65.88l-1.06.39a1 1 0 0 1-1.35-1.05l.07-1.13a8.1 8.1 0 0 1-1.6-.93l-1.07.4a1 1 0 0 1-1.18-.4l-.6-.99a1 1 0 0 1 .21-1.26l.85-.78a6.3 6.3 0 0 1 0-1.66l-.85-.78a1 1 0 0 1-.21-1.27l.6-.99a1 1 0 0 1 1.18-.39l1.07.39c.48-.39 1.02-.7 1.6-.93l.07-1.12z" />
       <circle cx="12" cy="12" r="2.5" strokeWidth={2} />
+    </svg>
+  )
+}
+
+function IconUser() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" strokeWidth={2} />
     </svg>
   )
 }

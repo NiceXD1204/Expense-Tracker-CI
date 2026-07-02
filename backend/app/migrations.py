@@ -17,6 +17,9 @@ _NEW_COLUMNS = {
     "users": [
         ("security_question", "VARCHAR(200)"),
         ("security_answer_hash", "VARCHAR(255)"),
+        ("first_name", "VARCHAR(100)"),
+        ("last_name", "VARCHAR(100)"),
+        ("avatar_data", "TEXT"),
     ],
     "expenses": [
         ("date", "DATE"),

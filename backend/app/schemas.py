@@ -42,9 +42,24 @@ class UserOut(BaseModel):
     id: int
     email: str
     display_name: str
+    first_name: str = ""
+    last_name: str = ""
+    avatar_data: Optional[str] = None
     household_id: Optional[int] = None
     security_question: Optional[str] = None
     created_at: datetime
+
+
+class ProfileUpdate(BaseModel):
+    first_name: str = Field(default="", max_length=100)
+    last_name: str = Field(default="", max_length=100)
+    display_name: str = Field(default="", max_length=100)
+    security_question: Optional[str] = Field(default=None, max_length=200)
+    security_answer: Optional[str] = Field(default=None, max_length=200)
+
+
+class AvatarUpdate(BaseModel):
+    avatar_data: str = Field(..., max_length=2_000_000)
 
 
 class ForgotPasswordQuestion(BaseModel):
