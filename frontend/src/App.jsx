@@ -10,6 +10,8 @@ import Dashboard from './pages/Dashboard'
 import Forecast from './pages/Forecast'
 import ForgotPassword from './pages/ForgotPassword'
 import Income from './pages/Income'
+import Investments from './pages/Investments'
+import KerenHishtalmut from './pages/KerenHishtalmut'
 import Login from './pages/Login'
 import NetWorth from './pages/NetWorth'
 import Profile from './pages/Profile'
@@ -70,6 +72,8 @@ export default function App() {
                   <Route path="/budgets" element={<Budgets />} />
                   <Route path="/networth" element={<NetWorth />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/investments" element={<Investments />} />
+                  <Route path="/keren-hishtalmut" element={<KerenHishtalmut />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -365,7 +365,115 @@ def leave_household(
     return {"message": "Left household"}
 
 
+@household_router.get("/members", response_model=list[schemas.HouseholdMemberOut])
+def get_household_members(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        return []
+    return (
+        db.query(models.User)
+        .filter(models.User.household_id == current_user.household_id)
+        .all()
+    )
+
+
 app.include_router(household_router)
+
+
+# ---------- Investment Funds ----------
+
+
+investment_router = APIRouter(prefix="/investment-funds", tags=["investments"])
+
+
+@investment_router.get("", response_model=list[schemas.InvestmentFundOut])
+def list_funds(
+    fund_type: Optional[str] = Query(None),
+    owner_user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    q = db.query(models.InvestmentFund)
+    q = _apply_visibility_filter(q, models.InvestmentFund, current_user)
+    if fund_type:
+        q = q.filter(models.InvestmentFund.fund_type == fund_type)
+    if owner_user_id is not None:
+        # Security: only allow filtering by self or a confirmed household member
+        is_self = owner_user_id == current_user.id
+        is_household_member = (
+            current_user.household_id is not None
+            and db.query(models.User).filter(
+                models.User.id == owner_user_id,
+                models.User.household_id == current_user.household_id,
+            ).first() is not None
+        )
+        if is_self or is_household_member:
+            q = q.filter(models.InvestmentFund.user_id == owner_user_id)
+    return q.order_by(models.InvestmentFund.created_at).all()
+
+
+@investment_router.post("", response_model=schemas.InvestmentFundOut, status_code=201)
+def create_fund(
+    payload: schemas.InvestmentFundCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    fund = models.InvestmentFund(
+        user_id=current_user.id,
+        household_id=_resolve_household(payload.is_shared, current_user),
+        fund_type=payload.fund_type,
+        name=payload.name,
+        current_balance=payload.current_balance,
+        annual_return_pct=payload.annual_return_pct,
+        monthly_contribution=payload.monthly_contribution,
+        management_fee_pct=payload.management_fee_pct,
+        salary=payload.salary,
+    )
+    db.add(fund)
+    db.commit()
+    db.refresh(fund)
+    return fund
+
+
+@investment_router.put("/{fund_id}", response_model=schemas.InvestmentFundOut)
+def update_fund(
+    fund_id: int,
+    payload: schemas.InvestmentFundUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    fund = db.get(models.InvestmentFund, fund_id)
+    if not fund:
+        raise HTTPException(status_code=404, detail="Fund not found")
+    _check_ownership(fund, current_user)
+    fund.name = payload.name
+    fund.current_balance = payload.current_balance
+    fund.annual_return_pct = payload.annual_return_pct
+    fund.monthly_contribution = payload.monthly_contribution
+    fund.management_fee_pct = payload.management_fee_pct
+    fund.salary = payload.salary
+    db.commit()
+    db.refresh(fund)
+    return fund
+
+
+@investment_router.delete("/{fund_id}", status_code=204)
+def delete_fund(
+    fund_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    fund = db.get(models.InvestmentFund, fund_id)
+    if not fund:
+        raise HTTPException(status_code=404, detail="Fund not found")
+    _check_ownership(fund, current_user)
+    db.delete(fund)
+    db.commit()
+
+
+app.include_router(investment_router)
 
 
 # ---------- Expenses ----------

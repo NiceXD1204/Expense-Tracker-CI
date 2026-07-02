@@ -18,6 +18,8 @@ function NavItems({ onClose }) {
     { to: '/budgets', labelKey: 'nav.budgets', icon: IconWallet },
     { to: '/networth', labelKey: 'nav.networth', icon: IconLandmark },
     { to: '/reports', labelKey: 'nav.reports', icon: IconDocument },
+    { to: '/investments', labelKey: 'nav.investments', icon: IconTrendingLine },
+    { to: '/keren-hishtalmut', labelKey: 'nav.kerenHistalmut', icon: IconPiggy },
     { to: '/settings', labelKey: 'nav.settings', icon: IconSettings },
     { to: '/profile', labelKey: 'nav.profile', icon: IconUser },
   ]
@@ -210,6 +212,25 @@ function IconUser() {
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" strokeWidth={2} />
+    </svg>
+  )
+}
+
+function IconTrendingLine() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l5-5 4 4 4-4" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 20h18" />
+    </svg>
+  )
+}
+
+function IconPiggy() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11c0 4-3.134 7-7 7s-7-3-7-7 3.134-7 7-7c1.8 0 3.45.68 4.7 1.8" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7h-4v4" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14h.01M12 16v2" />
     </svg>
   )
 }

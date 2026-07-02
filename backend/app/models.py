@@ -101,6 +101,23 @@ class RecurringEntry(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class InvestmentFund(Base):
+    __tablename__ = "investment_funds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
+    fund_type = Column(String(30), nullable=False, default="investment")  # "investment" | "keren_hishtalmut"
+    name = Column(String(100), nullable=False)
+    current_balance = Column(Float, nullable=False, default=0.0)
+    annual_return_pct = Column(Float, nullable=False, default=7.0)
+    monthly_contribution = Column(Float, nullable=False, default=0.0)
+    management_fee_pct = Column(Float, nullable=False, default=1.0)
+    salary = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
 class Account(Base):
     """A manually-entered asset or liability used for net worth tracking."""
 

@@ -101,6 +101,51 @@ class HouseholdOut(BaseModel):
     members: list[HouseholdMember] = []
 
 
+class HouseholdMemberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    display_name: str
+
+
+# ---------- Investment Funds ----------
+
+
+class InvestmentFundCreate(BaseModel):
+    fund_type: str = Field(..., pattern="^(investment|keren_hishtalmut)$")
+    name: str = Field(..., min_length=1, max_length=100)
+    current_balance: float = Field(..., ge=0)
+    annual_return_pct: float = Field(..., ge=0, le=100)
+    monthly_contribution: float = Field(default=0.0, ge=0)
+    management_fee_pct: float = Field(default=0.0, ge=0, le=100)
+    salary: Optional[float] = Field(default=None, ge=0)
+    is_shared: bool = False
+
+
+class InvestmentFundUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    current_balance: float = Field(..., ge=0)
+    annual_return_pct: float = Field(..., ge=0, le=100)
+    monthly_contribution: float = Field(default=0.0, ge=0)
+    management_fee_pct: float = Field(default=0.0, ge=0, le=100)
+    salary: Optional[float] = Field(default=None, ge=0)
+
+
+class InvestmentFundOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    fund_type: str
+    name: str
+    current_balance: float
+    annual_return_pct: float
+    monthly_contribution: float
+    management_fee_pct: float
+    salary: Optional[float] = None
+    user_id: int
+    household_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+
 # ---------- Expenses ----------
 
 
