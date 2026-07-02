@@ -388,6 +388,29 @@ def get_household_members(
     )
 
 
+@household_router.delete("/members/{user_id}")
+def kick_member(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="Not in a household")
+    household = db.get(models.Household, current_user.household_id)
+    if household is None or household.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the household creator can remove members")
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Use leave instead of removing yourself")
+
+    target = db.get(models.User, user_id)
+    if target is None or target.household_id != current_user.household_id:
+        raise HTTPException(status_code=404, detail="Member not found in this household")
+
+    target.household_id = None
+    db.commit()
+    return {"message": "Member removed"}
+
+
 app.include_router(household_router)
 
 

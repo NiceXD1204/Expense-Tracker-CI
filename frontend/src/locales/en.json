@@ -272,6 +272,8 @@
     "inviteCode": "Invite Code",
     "inviteCodeHint": "Share this code with your partner",
     "members": "Members",
+    "removeMember": "Remove",
+    "removeMemberConfirm": "Remove this member from the household? They will lose access to the household's shared data.",
     "leaveHousehold": "Leave Household",
     "leaveConfirm": "Are you sure you want to leave this household?",
     "notInHousehold": "You are not in a shared household yet",

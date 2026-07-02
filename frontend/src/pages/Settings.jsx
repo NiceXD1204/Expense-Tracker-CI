@@ -81,6 +81,17 @@ export default function Settings() {
     }
   }
 
+  const kickMember = async (memberId) => {
+    if (!window.confirm(t('settings.removeMemberConfirm'))) return
+    setHouseholdError('')
+    try {
+      await api.delete(`/household/members/${memberId}`)
+      setHousehold((h) => ({ ...h, members: h.members.filter((m) => m.id !== memberId) }))
+    } catch (e) {
+      setHouseholdError(e.response?.data?.detail || 'Error removing member')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -177,11 +188,21 @@ export default function Settings() {
               <div>
                 <p className="mb-1.5 text-xs font-medium text-muted">{t('settings.members')}</p>
                 {household.members.map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 py-1 text-sm text-ink">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
-                      {(m.display_name || m.email)[0].toUpperCase()}
-                    </span>
-                    {m.display_name || m.email}
+                  <div key={m.id} className="flex items-center justify-between gap-2 py-1 text-sm text-ink">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
+                        {(m.display_name || m.email)[0].toUpperCase()}
+                      </span>
+                      {m.display_name || m.email}
+                    </div>
+                    {user?.id === household.created_by && m.id !== household.created_by && (
+                      <button
+                        onClick={() => kickMember(m.id)}
+                        className="text-xs font-medium text-red-500 hover:underline"
+                      >
+                        {t('settings.removeMember')}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

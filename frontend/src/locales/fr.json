@@ -272,6 +272,8 @@
     "inviteCode": "Code d'invitation",
     "inviteCodeHint": "Partagez ce code avec votre partenaire",
     "members": "Membres",
+    "removeMember": "Retirer",
+    "removeMemberConfirm": "Retirer ce membre du foyer ? Il perdra l'accès aux données partagées.",
     "leaveHousehold": "Quitter le foyer",
     "leaveConfirm": "Êtes-vous sûr de vouloir quitter ce foyer ?",
     "notInHousehold": "Vous n'êtes pas encore dans un foyer partagé",

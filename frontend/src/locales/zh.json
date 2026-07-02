@@ -272,6 +272,8 @@
     "inviteCode": "邀请码",
     "inviteCodeHint": "将此邀请码分享给您的伴侣",
     "members": "成员",
+    "removeMember": "移除",
+    "removeMemberConfirm": "将此成员从家庭中移除？他们将无法再访问家庭的共享数据。",
     "leaveHousehold": "离开家庭",
     "leaveConfirm": "确定要离开此家庭吗？",
     "notInHousehold": "您尚未加入共享家庭",

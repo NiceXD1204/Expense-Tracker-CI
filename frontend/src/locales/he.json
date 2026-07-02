@@ -272,6 +272,8 @@
     "inviteCode": "קוד הזמנה",
     "inviteCodeHint": "שתף קוד זה עם בן/בת הזוג",
     "members": "חברים",
+    "removeMember": "הסר",
+    "removeMemberConfirm": "להסיר את החבר הזה ממשק הבית? הוא יאבד גישה לנתונים המשותפים.",
     "leaveHousehold": "עזוב משק הבית",
     "leaveConfirm": "האם אתה בטוח שברצונך לעזוב את משק הבית?",
     "notInHousehold": "אינך במשק בית משותף עדיין",
