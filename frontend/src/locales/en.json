@@ -5,12 +5,16 @@
     "recurring": "Recurring",
     "subscriptions": "Subscriptions",
     "transactions": "Transactions",
+    "expenses": "Expenses",
     "analytics": "Analytics",
     "forecast": "Forecast",
     "budgets": "Budgets",
     "networth": "Net Worth",
     "reports": "Reports",
+    "investments": "Investments",
+    "kerenHistalmut": "Keren Hishtalmut",
     "settings": "Settings",
+    "profile": "Profile",
     "logout": "Logout"
   },
   "auth": {
@@ -24,7 +28,8 @@
     "haveAccount": "Already have an account?",
     "loginBtn": "Sign in",
     "registerBtn": "Create account",
-    "invalidCredentials": "Invalid email or password"
+    "invalidCredentials": "Invalid email or password",
+    "forgotPassword": "Forgot password?"
   },
   "common": {
     "add": "Add",
@@ -52,7 +57,8 @@
     "source": "Source",
     "thisMonth": "this month",
     "allTime": "all time",
-    "overBudget": "Over budget"
+    "overBudget": "Over budget",
+    "you": "(you)"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -274,5 +280,93 @@
     "overspending": "You're overspending by {{amount}} this month.",
     "onTrack": "You're saving {{actual}} of your {{goal}} goal — on track!",
     "short": "You're saving {{actual}} of your {{goal}} goal — {{short}} short."
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Your account information",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "displayName": "Display name",
+    "photo": "Profile photo",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove photo",
+    "save": "Save changes",
+    "saved": "Saved!",
+    "errorSave": "Failed to save. Please try again."
+  },
+  "investments": {
+    "title": "Investments",
+    "subtitle": "Track your investment portfolio",
+    "addFund": "Add fund",
+    "editFund": "Edit fund",
+    "fundName": "Fund name",
+    "annualReturn": "Annual return (%)",
+    "currentBalance": "Current balance",
+    "monthlyContribution": "Monthly contribution",
+    "managementFee": "Management fee (%)",
+    "projection": "Projected growth",
+    "years": "{{count}} years",
+    "projectedValue": "Projected value",
+    "totalContributions": "Total contributions",
+    "totalGrowth": "Total growth",
+    "noFunds": "No funds yet",
+    "noFundsHint": "Add your first investment fund to see compound growth projections.",
+    "addFirstFund": "Add your first fund",
+    "annualReturnHint": "Expected annual growth rate before fees",
+    "managementFeeHint": "Annual fee deducted from returns",
+    "deleteFund": "Delete fund",
+    "totalPortfolio": "Total portfolio value",
+    "selectHorizon": "Projection horizon",
+    "balance": "Balance",
+    "year": "Year",
+    "value": "Value",
+    "contributions": "Contributions",
+    "growth": "Growth",
+    "contributionPct": "Contribution (% of monthly income)",
+    "salaryBasis": "Your monthly income: {{amount}}",
+    "salaryFormula": "= {{pct}}% × {{salary}} = {{amount}}/month",
+    "noSalary": "No income recorded — enter a flat monthly amount",
+    "horizonLabel": "Projection horizon",
+    "memberSelector": "Viewing funds for:",
+    "noFundsOther": "{{name}} has no funds yet"
+  },
+  "keren": {
+    "title": "Keren Hishtalmut",
+    "subtitle": "קרן השתלמות — professional development fund"
+  },
+  "security": {
+    "question": "Security question",
+    "answer": "Your answer",
+    "selectQuestion": "Select a question",
+    "answerHint": "Enter your answer",
+    "answerNote": "Case-insensitive. You'll use this to recover your account.",
+    "setQuestion": "Set security question",
+    "currentQuestion": "Current security question",
+    "changeQuestion": "Change security question",
+    "questionSet": "Security question is set ✓",
+    "newAnswer": "New answer (leave blank to keep current)",
+    "questions": {
+      "pet": "What was the name of your first pet?",
+      "city": "What city were you born in?",
+      "maiden": "What is your mother's maiden name?",
+      "school": "What was the name of your elementary school?",
+      "nickname": "What was your childhood nickname?"
+    }
+  },
+  "forgotPassword": {
+    "title": "Forgot password",
+    "subtitle": "Enter your email to recover your account.",
+    "emailPlaceholder": "your@email.com",
+    "continue": "Continue",
+    "yourQuestion": "Your security question",
+    "enterAnswer": "Your answer",
+    "newPassword": "New password",
+    "resetPassword": "Reset password",
+    "success": "Password reset successfully! You can now log in with your new password.",
+    "wrongAnswer": "Incorrect answer. Please try again.",
+    "tooManyAttempts": "Too many attempts. Please wait 15 minutes and try again.",
+    "emailNotFound": "If that email is registered and has a security question set, it will appear here.",
+    "backToLogin": "Back to login",
+    "error": "Something went wrong. Please try again."
   }
 }

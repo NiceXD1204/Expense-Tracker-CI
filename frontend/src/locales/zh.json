@@ -5,12 +5,16 @@
     "recurring": "定期",
     "subscriptions": "订阅",
     "transactions": "交易",
+    "expenses": "支出",
     "analytics": "分析",
     "forecast": "预测",
     "budgets": "预算",
     "networth": "净资产",
     "reports": "报告",
+    "investments": "投资",
+    "kerenHistalmut": "积累基金",
     "settings": "设置",
+    "profile": "个人资料",
     "logout": "退出登录"
   },
   "auth": {
@@ -24,7 +28,8 @@
     "haveAccount": "已有账户？",
     "loginBtn": "登录",
     "registerBtn": "创建账户",
-    "invalidCredentials": "邮箱或密码错误"
+    "invalidCredentials": "邮箱或密码错误",
+    "forgotPassword": "忘记密码？"
   },
   "common": {
     "add": "添加",
@@ -52,7 +57,8 @@
     "source": "来源",
     "thisMonth": "本月",
     "allTime": "所有时间",
-    "overBudget": "超出预算"
+    "overBudget": "超出预算",
+    "you": "(您)"
   },
   "dashboard": {
     "title": "仪表板",
@@ -274,5 +280,93 @@
     "overspending": "您本月超支了 {{amount}}。",
     "onTrack": "您储蓄了 {{actual}}，目标 {{goal}} — 进展顺利！",
     "short": "您储蓄了 {{actual}}，目标 {{goal}} — 还差 {{short}}。"
+  },
+  "profile": {
+    "title": "个人资料",
+    "subtitle": "您的账户信息",
+    "firstName": "名字",
+    "lastName": "姓氏",
+    "displayName": "显示名称",
+    "photo": "头像",
+    "changePhoto": "更换头像",
+    "removePhoto": "删除头像",
+    "save": "保存更改",
+    "saved": "已保存！",
+    "errorSave": "保存失败，请重试。"
+  },
+  "investments": {
+    "title": "投资",
+    "subtitle": "跟踪您的投资组合",
+    "addFund": "添加基金",
+    "editFund": "编辑基金",
+    "fundName": "基金名称",
+    "annualReturn": "年化收益率 (%)",
+    "currentBalance": "当前余额",
+    "monthlyContribution": "月供",
+    "managementFee": "管理费 (%)",
+    "projection": "增长预测",
+    "years": "{{count}} 年",
+    "projectedValue": "预计价值",
+    "totalContributions": "总投入",
+    "totalGrowth": "总增长",
+    "noFunds": "暂无基金",
+    "noFundsHint": "添加您的第一只基金以查看复利增长预测。",
+    "addFirstFund": "添加第一只基金",
+    "annualReturnHint": "税前预期年化收益率",
+    "managementFeeHint": "从收益中扣除的年费",
+    "deleteFund": "删除基金",
+    "totalPortfolio": "投资组合总价值",
+    "selectHorizon": "预测期限",
+    "balance": "余额",
+    "year": "年",
+    "value": "价值",
+    "contributions": "投入",
+    "growth": "增长",
+    "contributionPct": "缴款（占月收入的%）",
+    "salaryBasis": "您的月收入：{{amount}}",
+    "salaryFormula": "= {{pct}}% × {{salary}} = {{amount}}/月",
+    "noSalary": "无收入记录 — 请输入每月固定金额",
+    "horizonLabel": "预测年限",
+    "memberSelector": "查看基金:",
+    "noFundsOther": "{{name}} 暂无基金"
+  },
+  "keren": {
+    "title": "积累基金",
+    "subtitle": "קרן השתלמות — 职业发展储蓄基金"
+  },
+  "security": {
+    "question": "安全问题",
+    "answer": "您的答案",
+    "selectQuestion": "选择问题",
+    "answerHint": "输入您的答案",
+    "answerNote": "不区分大小写，用于找回账户。",
+    "setQuestion": "设置安全问题",
+    "currentQuestion": "当前安全问题",
+    "changeQuestion": "更改安全问题",
+    "questionSet": "安全问题已设置 ✓",
+    "newAnswer": "新答案（留空保持原样）",
+    "questions": {
+      "pet": "您第一只宠物叫什么名字？",
+      "city": "您出生在哪个城市？",
+      "maiden": "您母亲的娘家姓是什么？",
+      "school": "您的小学叫什么名字？",
+      "nickname": "您童年时的昵称是什么？"
+    }
+  },
+  "forgotPassword": {
+    "title": "忘记密码",
+    "subtitle": "输入您的邮箱以恢复账户。",
+    "emailPlaceholder": "your@email.com",
+    "continue": "继续",
+    "yourQuestion": "您的安全问题",
+    "enterAnswer": "您的答案",
+    "newPassword": "新密码",
+    "resetPassword": "重置密码",
+    "success": "密码重置成功！您现在可以登录了。",
+    "wrongAnswer": "答案不正确，请重试。",
+    "tooManyAttempts": "尝试次数过多，请等待15分钟后再试。",
+    "emailNotFound": "如果该邮箱已注册且设置了安全问题，问题将显示在此处。",
+    "backToLogin": "返回登录",
+    "error": "出错了，请重试。"
   }
 }

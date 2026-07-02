@@ -5,12 +5,16 @@
     "recurring": "المتكررة",
     "subscriptions": "الاشتراكات",
     "transactions": "المعاملات",
+    "expenses": "المصروفات",
     "analytics": "التحليلات",
     "forecast": "التوقعات",
     "budgets": "الميزانية",
     "networth": "صافي الثروة",
     "reports": "التقارير",
+    "investments": "الاستثمارات",
+    "kerenHistalmut": "كيرن هيشتلموت",
     "settings": "الإعدادات",
+    "profile": "الملف الشخصي",
     "logout": "تسجيل خروج"
   },
   "auth": {
@@ -24,7 +28,8 @@
     "haveAccount": "لديك حساب بالفعل؟",
     "loginBtn": "تسجيل الدخول",
     "registerBtn": "إنشاء حساب",
-    "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة"
+    "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة",
+    "forgotPassword": "نسيت كلمة المرور؟"
   },
   "common": {
     "add": "إضافة",
@@ -52,7 +57,8 @@
     "source": "المصدر",
     "thisMonth": "هذا الشهر",
     "allTime": "كل الوقت",
-    "overBudget": "تجاوز الميزانية"
+    "overBudget": "تجاوز الميزانية",
+    "you": "(أنت)"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -274,5 +280,93 @@
     "overspending": "أنت تتجاوز ميزانيتك بمقدار {{amount}} هذا الشهر.",
     "onTrack": "أنت توفر {{actual}} من هدف {{goal}} — أنت على المسار!",
     "short": "أنت توفر {{actual}} من هدف {{goal}} — ينقصك {{short}}."
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "subtitle": "معلومات حسابك",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "displayName": "اسم العرض",
+    "photo": "صورة الملف الشخصي",
+    "changePhoto": "تغيير الصورة",
+    "removePhoto": "إزالة الصورة",
+    "save": "حفظ التغييرات",
+    "saved": "تم الحفظ!",
+    "errorSave": "فشل الحفظ. يرجى المحاولة مرة أخرى."
+  },
+  "investments": {
+    "title": "الاستثمارات",
+    "subtitle": "تتبع محفظتك الاستثمارية",
+    "addFund": "إضافة صندوق",
+    "editFund": "تعديل الصندوق",
+    "fundName": "اسم الصندوق",
+    "annualReturn": "العائد السنوي (%)",
+    "currentBalance": "الرصيد الحالي",
+    "monthlyContribution": "الاشتراك الشهري",
+    "managementFee": "رسوم الإدارة (%)",
+    "projection": "توقعات النمو",
+    "years": "{{count}} سنوات",
+    "projectedValue": "القيمة المتوقعة",
+    "totalContributions": "إجمالي المساهمات",
+    "totalGrowth": "إجمالي النمو",
+    "noFunds": "لا توجد صناديق بعد",
+    "noFundsHint": "أضف أول صندوق استثماري لعرض توقعات النمو المركب.",
+    "addFirstFund": "أضف صندوقك الأول",
+    "annualReturnHint": "معدل العائد السنوي المتوقع قبل الرسوم",
+    "managementFeeHint": "الرسوم السنوية المخصومة من العوائد",
+    "deleteFund": "حذف الصندوق",
+    "totalPortfolio": "إجمالي قيمة المحفظة",
+    "selectHorizon": "أفق التوقعات",
+    "balance": "الرصيد",
+    "year": "السنة",
+    "value": "القيمة",
+    "contributions": "المساهمات",
+    "growth": "النمو",
+    "contributionPct": "المساهمة (% من الدخل الشهري)",
+    "salaryBasis": "دخلك الشهري: {{amount}}",
+    "salaryFormula": "= {{pct}}% × {{salary}} = {{amount}}/شهر",
+    "noSalary": "لا يوجد دخل مسجل — أدخل مبلغاً شهرياً ثابتاً",
+    "horizonLabel": "أفق التوقعات",
+    "memberSelector": "عرض صناديق:",
+    "noFundsOther": "{{name}} ليس لديه صناديق بعد"
+  },
+  "keren": {
+    "title": "كيرن هيشتلموت",
+    "subtitle": "קרן השתלמות — صندوق التطوير المهني"
+  },
+  "security": {
+    "question": "سؤال الأمان",
+    "answer": "إجابتك",
+    "selectQuestion": "اختر سؤالاً",
+    "answerHint": "أدخل إجابتك",
+    "answerNote": "غير حساس لحالة الأحرف. ستستخدمه لاسترداد حسابك.",
+    "setQuestion": "تعيين سؤال الأمان",
+    "currentQuestion": "سؤال الأمان الحالي",
+    "changeQuestion": "تغيير سؤال الأمان",
+    "questionSet": "سؤال الأمان مُعيَّن ✓",
+    "newAnswer": "إجابة جديدة (اتركه فارغاً للإبقاء على الحالي)",
+    "questions": {
+      "pet": "ما اسم حيوانك الأليف الأول؟",
+      "city": "في أي مدينة وُلدت؟",
+      "maiden": "ما اسم عائلة والدتك قبل الزواج؟",
+      "school": "ما اسم مدرستك الابتدائية؟",
+      "nickname": "ما كان لقبك في الطفولة؟"
+    }
+  },
+  "forgotPassword": {
+    "title": "نسيت كلمة المرور",
+    "subtitle": "أدخل بريدك الإلكتروني لاسترداد حسابك.",
+    "emailPlaceholder": "your@email.com",
+    "continue": "متابعة",
+    "yourQuestion": "سؤال الأمان الخاص بك",
+    "enterAnswer": "إجابتك",
+    "newPassword": "كلمة مرور جديدة",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "success": "تم إعادة تعيين كلمة المرور! يمكنك الآن تسجيل الدخول.",
+    "wrongAnswer": "إجابة غير صحيحة. يرجى المحاولة مرة أخرى.",
+    "tooManyAttempts": "محاولات كثيرة جداً. يرجى الانتظار 15 دقيقة.",
+    "emailNotFound": "إذا كان البريد مسجلاً ولديه سؤال أمان، سيظهر هنا.",
+    "backToLogin": "العودة إلى تسجيل الدخول",
+    "error": "حدث خطأ. يرجى المحاولة مرة أخرى."
   }
 }

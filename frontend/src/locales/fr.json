@@ -5,12 +5,16 @@
     "recurring": "Récurrents",
     "subscriptions": "Abonnements",
     "transactions": "Transactions",
+    "expenses": "Dépenses",
     "analytics": "Analytiques",
     "forecast": "Prévisions",
     "budgets": "Budgets",
     "networth": "Valeur nette",
     "reports": "Rapports",
+    "investments": "Investissements",
+    "kerenHistalmut": "Keren Hishtalmut",
     "settings": "Paramètres",
+    "profile": "Profil",
     "logout": "Se déconnecter"
   },
   "auth": {
@@ -24,7 +28,8 @@
     "haveAccount": "Déjà un compte ?",
     "loginBtn": "Se connecter",
     "registerBtn": "Créer un compte",
-    "invalidCredentials": "Email ou mot de passe invalide"
+    "invalidCredentials": "Email ou mot de passe invalide",
+    "forgotPassword": "Mot de passe oublié ?"
   },
   "common": {
     "add": "Ajouter",
@@ -52,7 +57,8 @@
     "source": "Source",
     "thisMonth": "ce mois-ci",
     "allTime": "tout le temps",
-    "overBudget": "Dépassement du budget"
+    "overBudget": "Dépassement du budget",
+    "you": "(vous)"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -274,5 +280,93 @@
     "overspending": "Vous dépensez {{amount}} de trop ce mois-ci.",
     "onTrack": "Vous épargnez {{actual}} sur votre objectif de {{goal}} — en bonne voie !",
     "short": "Vous épargnez {{actual}} sur votre objectif de {{goal}} — il manque {{short}}."
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Informations de votre compte",
+    "firstName": "Prénom",
+    "lastName": "Nom de famille",
+    "displayName": "Nom d'affichage",
+    "photo": "Photo de profil",
+    "changePhoto": "Changer la photo",
+    "removePhoto": "Supprimer la photo",
+    "save": "Enregistrer les modifications",
+    "saved": "Enregistré !",
+    "errorSave": "Échec de l'enregistrement. Veuillez réessayer."
+  },
+  "investments": {
+    "title": "Investissements",
+    "subtitle": "Suivez votre portefeuille d'investissements",
+    "addFund": "Ajouter un fonds",
+    "editFund": "Modifier le fonds",
+    "fundName": "Nom du fonds",
+    "annualReturn": "Rendement annuel (%)",
+    "currentBalance": "Solde actuel",
+    "monthlyContribution": "Versement mensuel",
+    "managementFee": "Frais de gestion (%)",
+    "projection": "Projection de croissance",
+    "years": "{{count}} ans",
+    "projectedValue": "Valeur projetée",
+    "totalContributions": "Total des versements",
+    "totalGrowth": "Croissance totale",
+    "noFunds": "Aucun fonds pour l'instant",
+    "noFundsHint": "Ajoutez votre premier fonds pour voir les projections de croissance composée.",
+    "addFirstFund": "Ajouter votre premier fonds",
+    "annualReturnHint": "Taux de rendement annuel attendu avant frais",
+    "managementFeeHint": "Frais annuels déduits des rendements",
+    "deleteFund": "Supprimer le fonds",
+    "totalPortfolio": "Valeur totale du portefeuille",
+    "selectHorizon": "Horizon de projection",
+    "balance": "Solde",
+    "year": "Année",
+    "value": "Valeur",
+    "contributions": "Versements",
+    "growth": "Croissance",
+    "contributionPct": "Versement (% du revenu mensuel)",
+    "salaryBasis": "Revenu mensuel : {{amount}}",
+    "salaryFormula": "= {{pct}}% × {{salary}} = {{amount}}/mois",
+    "noSalary": "Aucun revenu enregistré — saisissez un montant mensuel fixe",
+    "horizonLabel": "Horizon de projection",
+    "memberSelector": "Fonds de :",
+    "noFundsOther": "{{name}} n'a pas encore de fonds"
+  },
+  "keren": {
+    "title": "Keren Hishtalmut",
+    "subtitle": "קרן השתלמות — fonds de développement professionnel"
+  },
+  "security": {
+    "question": "Question de sécurité",
+    "answer": "Votre réponse",
+    "selectQuestion": "Sélectionner une question",
+    "answerHint": "Entrez votre réponse",
+    "answerNote": "Non sensible à la casse. Utilisée pour récupérer votre compte.",
+    "setQuestion": "Définir une question de sécurité",
+    "currentQuestion": "Question de sécurité actuelle",
+    "changeQuestion": "Changer la question de sécurité",
+    "questionSet": "Question de sécurité définie ✓",
+    "newAnswer": "Nouvelle réponse (laisser vide pour conserver l'actuelle)",
+    "questions": {
+      "pet": "Quel était le nom de votre premier animal de compagnie ?",
+      "city": "Dans quelle ville êtes-vous né(e) ?",
+      "maiden": "Quel est le nom de jeune fille de votre mère ?",
+      "school": "Quel était le nom de votre école primaire ?",
+      "nickname": "Quel était votre surnom d'enfance ?"
+    }
+  },
+  "forgotPassword": {
+    "title": "Mot de passe oublié",
+    "subtitle": "Entrez votre email pour récupérer votre compte.",
+    "emailPlaceholder": "votre@email.com",
+    "continue": "Continuer",
+    "yourQuestion": "Votre question de sécurité",
+    "enterAnswer": "Votre réponse",
+    "newPassword": "Nouveau mot de passe",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "success": "Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.",
+    "wrongAnswer": "Réponse incorrecte. Veuillez réessayer.",
+    "tooManyAttempts": "Trop de tentatives. Veuillez attendre 15 minutes.",
+    "emailNotFound": "Si cet email est enregistré et possède une question de sécurité, elle apparaîtra ici.",
+    "backToLogin": "Retour à la connexion",
+    "error": "Une erreur s'est produite. Veuillez réessayer."
   }
 }
