@@ -3,7 +3,9 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
-function NavItems({ onClose }) {
+const RTL_LANGS = ['he', 'ar']
+
+function NavItems({ onClose, showLabels }) {
   const { t } = useTranslation()
   const { logout } = useAuth()
 
@@ -31,22 +33,47 @@ function NavItems({ onClose }) {
           key={to}
           to={to}
           onClick={onClose}
+          title={showLabels ? undefined : t(labelKey)}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
-              isActive ? 'bg-accent text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white'
-            }`
+            [
+              'flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors duration-200',
+              showLabels ? 'gap-3 px-3' : 'justify-center',
+              isActive ? 'bg-accent text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white',
+            ].join(' ')
           }
         >
-          <Icon />
-          {t(labelKey)}
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+            <Icon />
+          </span>
+          <span
+            className={[
+              'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
+              showLabels ? 'max-w-[180px] opacity-100' : 'max-w-0 opacity-0',
+            ].join(' ')}
+          >
+            {t(labelKey)}
+          </span>
         </NavLink>
       ))}
       <button
         onClick={() => { onClose?.(); logout() }}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 transition-colors duration-200 hover:bg-white/10 hover:text-white"
+        title={showLabels ? undefined : t('nav.logout')}
+        className={[
+          'flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-gray-300 transition-colors duration-200 hover:bg-white/10 hover:text-white',
+          showLabels ? 'gap-3 px-3' : 'justify-center',
+        ].join(' ')}
       >
-        <IconLogout />
-        {t('nav.logout')}
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+          <IconLogout />
+        </span>
+        <span
+          className={[
+            'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
+            showLabels ? 'max-w-[180px] opacity-100' : 'max-w-0 opacity-0',
+          ].join(' ')}
+        >
+          {t('nav.logout')}
+        </span>
       </button>
     </>
   )
@@ -54,9 +81,15 @@ function NavItems({ onClose }) {
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const { i18n } = useTranslation()
+  const isRTL = RTL_LANGS.includes(i18n.language)
+
+  const showLabels = isExpanded || open
 
   return (
     <>
+      {/* Mobile top bar */}
       <div className="flex items-center justify-between bg-sidebar px-4 py-3 text-white md:hidden">
         <span className="text-lg font-semibold">💸 Expense Tracker</span>
         <button
@@ -68,25 +101,59 @@ export default function Sidebar() {
         </button>
       </div>
 
+      {/* Mobile overlay */}
       {open && (
         <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setOpen(false)} />
       )}
 
+      {/* Sidebar panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar text-gray-300 transition-transform duration-300 md:static md:translate-x-0 ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        dir={isRTL ? 'rtl' : 'ltr'}
+        onMouseEnter={() => setIsExpanded(true)}
+        onMouseLeave={() => setIsExpanded(false)}
+        className={[
+          /* shared */
+          'fixed inset-y-0 z-40 flex w-64 flex-col bg-sidebar text-gray-300 overflow-hidden',
+          /* mobile: slide transform */
+          'transition-transform duration-300',
+          isRTL ? 'right-0' : 'left-0',
+          open ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full'),
+          /* desktop: static + width transition; order is relative to the
+             App-level flex container which is forced dir="ltr" so md:order
+             deterministically places this on the physical right for RTL
+             languages instead of relying on inherited flex-direction reversal */
+          'md:static md:translate-x-0 md:shrink-0 md:transition-[width] md:duration-300 md:ease-in-out',
+          isRTL ? 'md:order-2' : 'md:order-1',
+          isExpanded ? 'md:w-64' : 'md:w-14',
+        ].join(' ')}
       >
-        <div className="flex items-center gap-2 px-6 py-5 text-xl font-bold text-white">
-          <span>💸</span>
-          <span>Expense Tracker</span>
+        {/* Logo */}
+        <div className="flex items-center overflow-hidden px-3 py-5 text-xl font-bold text-white">
+          <span className="shrink-0">💸</span>
+          <span
+            className={[
+              'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
+              showLabels ? 'ml-2 max-w-[160px] opacity-100' : 'max-w-0 opacity-0',
+            ].join(' ')}
+          >
+            Expense Tracker
+          </span>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3">
-          <NavItems onClose={() => setOpen(false)} />
+        {/* Nav */}
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-1.5 py-1">
+          <NavItems onClose={() => setOpen(false)} showLabels={showLabels} />
         </nav>
 
-        <div className="px-6 py-4 text-xs text-gray-500">DevOps Final Project · 2026</div>
+        {/* Footer */}
+        <div
+          className={[
+            'overflow-hidden whitespace-nowrap px-3 text-xs text-gray-500 transition-[max-height,opacity] duration-200',
+            showLabels ? 'max-h-10 py-4 opacity-100' : 'max-h-0 py-0 opacity-0',
+          ].join(' ')}
+        >
+          DevOps Final Project · 2026
+        </div>
       </aside>
     </>
   )

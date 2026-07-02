@@ -55,10 +55,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <div
-              className={`flex min-h-screen flex-col bg-page ${isRTL ? 'md:flex-row-reverse' : 'md:flex-row'}`}
+              dir="ltr"
+              className="flex min-h-screen flex-col bg-page md:flex-row"
             >
               <Sidebar />
-              <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+              <main
+                dir={isRTL ? 'rtl' : 'ltr'}
+                className={`flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8 ${isRTL ? 'md:order-1' : 'md:order-2'}`}
+              >
                 <TopBar />
                 <Routes>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
