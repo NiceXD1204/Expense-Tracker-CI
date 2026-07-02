@@ -7,7 +7,6 @@ import useIncome from '../hooks/useIncome'
 import useTheme from '../hooks/useTheme'
 import { getChartTheme } from '../utils/chartTheme'
 import { formatCurrency, isSameMonth } from '../utils/format'
-import api from '../api/expenses'
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
@@ -26,7 +25,7 @@ function computeProjection(fund, years) {
   return { points, finalValue: last.value, finalContributions: last.contributions, finalGrowth: last.growth }
 }
 
-function FundModal({ fund, onSave, onCancel, isSaving, salaryBasis }) {
+function FundModal({ fund, onSave, onCancel, isSaving, salaryBasis, isHousehold }) {
   const { t } = useTranslation()
 
   const initPct = (fund.salary && fund.salary > 0)
@@ -119,11 +118,10 @@ function FundModal({ fund, onSave, onCancel, isSaving, salaryBasis }) {
           )}
         </div>
 
-        {!fund.id && (
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted">
-            <input type="checkbox" checked={!!form.is_shared} onChange={(e) => setForm((p) => ({ ...p, is_shared: e.target.checked }))} className="rounded" />
-            {t('common.shared')}
-          </label>
+        {isHousehold && (
+          <p className="rounded-lg bg-accent/10 px-3 py-2 text-xs font-medium text-accent">
+            👥 {t('common.autoSharedNote')}
+          </p>
         )}
 
         <div className="flex gap-3 pt-2">
@@ -150,10 +148,6 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
   const [isSaving, setIsSaving] = useState(false)
   const [horizon, setHorizon] = useState(20)
 
-  // Household member selector
-  const [members, setMembers] = useState([])
-  const [selectedMemberId, setSelectedMemberId] = useState(null) // null = self
-
   const { income } = useIncome()
 
   // Use most-recent month with income, not just current month
@@ -170,36 +164,25 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
       .reduce((s, i) => s + i.amount, 0)
   }, [income])
 
-  // Fetch household members when in a household
-  useEffect(() => {
-    if (user?.household_id) {
-      api.get('/household/members')
-        .then((r) => setMembers(r.data))
-        .catch(() => setMembers([]))
-    }
-  }, [user?.household_id])
-
   const loadFunds = useCallback(async () => {
     if (!user) return
     setLoading(true)
     try {
-      // In a household: always filter by owner so we see one member at a time
-      const ownerId = user.household_id ? (selectedMemberId ?? user.id) : undefined
-      const data = await getInvestmentFunds(fundType, ownerId)
+      const data = await getInvestmentFunds(fundType)
       setFunds(data)
     } catch (e) {
       console.error('Failed to load funds', e)
     } finally {
       setLoading(false)
     }
-  }, [fundType, selectedMemberId, user])
+  }, [fundType, user])
 
   useEffect(() => { loadFunds() }, [loadFunds])
 
   const openAdd = () => setEditingFund({
     name: '', current_balance: 0, annual_return_pct: 7,
     monthly_contribution: 0, management_fee_pct: 1,
-    contribution_pct: 0, salary: null, is_shared: false,
+    contribution_pct: 0, salary: null,
   })
 
   const openEdit = (fund) => {
@@ -227,7 +210,7 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
         const updated = await updateInvestmentFund(form.id, payload)
         setFunds((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))
       } else {
-        const created = await createInvestmentFund({ ...payload, fund_type: fundType, is_shared: !!form.is_shared })
+        const created = await createInvestmentFund({ ...payload, fund_type: fundType })
         setFunds((prev) => [...prev, created])
       }
       setEditingFund(null)
@@ -269,10 +252,6 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
   const finalProjected = chartData.length ? chartData[chartData.length - 1]._totalValue : 0
   const totalContrib = chartData.length ? chartData[chartData.length - 1]._totalContrib : 0
 
-  // Determine which member is being viewed (for "can add funds" check)
-  const viewingSelf = !selectedMemberId || selectedMemberId === user?.id
-  const selectedMember = members.find((m) => m.id === selectedMemberId)
-
   if (loading) return <div className="py-20 text-center text-muted">{t('common.loading')}</div>
 
   return (
@@ -282,34 +261,10 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
           <h1 className="text-2xl font-bold text-ink">{t(titleKey)}</h1>
           <p className="text-sm text-muted">{t(subtitleKey)}</p>
         </div>
-        {viewingSelf && (
-          <button onClick={openAdd} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent-hover">
-            + {t('investments.addFund')}
-          </button>
-        )}
+        <button onClick={openAdd} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent-hover">
+          + {t('investments.addFund')}
+        </button>
       </div>
-
-      {/* Household member selector */}
-      {user?.household_id && members.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted">{t('investments.memberSelector')}</span>
-          {members.map((m) => {
-            const isActive = (selectedMemberId ?? user.id) === m.id
-            return (
-              <button
-                key={m.id}
-                onClick={() => setSelectedMemberId(m.id === user.id ? null : m.id)}
-                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-accent text-white' : 'border border-card-border text-muted hover:bg-card-border'
-                }`}
-              >
-                {m.display_name || m.email}
-                {m.id === user.id && <span className="ml-1 text-xs opacity-75">{t('common.you')}</span>}
-              </button>
-            )
-          })}
-        </div>
-      )}
 
       {/* Salary basis info */}
       {totalMonthlyIncome > 0 && (
@@ -322,16 +277,10 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
         <div className="rounded-xl border border-card-border bg-card p-12 text-center">
           <p className="text-4xl">📈</p>
           <p className="mt-3 text-lg font-semibold text-ink">{t('investments.noFunds')}</p>
-          <p className="mt-1 text-sm text-muted">
-            {viewingSelf
-              ? t('investments.noFundsHint')
-              : t('investments.noFundsOther', { name: selectedMember?.display_name || '' })}
-          </p>
-          {viewingSelf && (
-            <button onClick={openAdd} className="mt-4 rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent-hover">
-              {t('investments.addFirstFund')}
-            </button>
-          )}
+          <p className="mt-1 text-sm text-muted">{t('investments.noFundsHint')}</p>
+          <button onClick={openAdd} className="mt-4 rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent-hover">
+            {t('investments.addFirstFund')}
+          </button>
         </div>
       ) : (
         <>
@@ -364,12 +313,10 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
                       <span className="inline-block h-2.5 w-2.5 rounded-full mr-2" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                       <span className="font-semibold text-ink">{fund.name}</span>
                     </div>
-                    {viewingSelf && (
-                      <div className="flex gap-2">
-                        <button onClick={() => openEdit(fund)} className="rounded-md p-1 text-muted hover:bg-card-border" aria-label={t('common.edit')}>✏️</button>
-                        <button onClick={() => handleDelete(fund.id)} className="rounded-md p-1 text-expense hover:bg-expense/10" aria-label={t('investments.deleteFund')}>🗑️</button>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(fund)} className="rounded-md p-1 text-muted hover:bg-card-border" aria-label={t('common.edit')}>✏️</button>
+                      <button onClick={() => handleDelete(fund.id)} className="rounded-md p-1 text-expense hover:bg-expense/10" aria-label={t('investments.deleteFund')}>🗑️</button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
@@ -442,13 +389,14 @@ export default function InvestmentsPage({ fundType, titleKey, subtitleKey }) {
         </>
       )}
 
-      {editingFund !== null && viewingSelf && (
+      {editingFund !== null && (
         <FundModal
           fund={editingFund}
           onSave={handleSave}
           onCancel={() => setEditingFund(null)}
           isSaving={isSaving}
           salaryBasis={totalMonthlyIncome}
+          isHousehold={Boolean(user?.household_id)}
         />
       )}
     </div>

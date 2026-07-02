@@ -118,7 +118,6 @@ class InvestmentFundCreate(BaseModel):
     monthly_contribution: float = Field(default=0.0, ge=0)
     management_fee_pct: float = Field(default=0.0, ge=0, le=100)
     salary: Optional[float] = Field(default=None, ge=0)
-    is_shared: bool = False
 
 
 class InvestmentFundUpdate(BaseModel):
@@ -156,7 +155,6 @@ class ExpenseCreate(BaseModel):
     amount: float = Field(..., gt=0)
     category: Category
     date: Optional[date_type] = None
-    is_shared: bool = False
 
     @field_validator("description", mode="before")
     @classmethod
@@ -201,7 +199,6 @@ class IncomeCreate(BaseModel):
     amount: float = Field(..., gt=0)
     source: IncomeSource
     date: Optional[date_type] = None
-    is_shared: bool = False
 
     @field_validator("description", mode="before")
     @classmethod
@@ -283,7 +280,6 @@ class RecurringCreate(BaseModel):
     day_of_month: int = Field(..., ge=1, le=28)
     active: bool = True
     is_subscription: bool = False
-    is_shared: bool = False
 
     @field_validator("description", mode="before")
     @classmethod
@@ -363,7 +359,6 @@ class AccountCreate(BaseModel):
     type: AccountType
     balance: float = Field(..., ge=0)
     category: Optional[str] = Field(default=None, max_length=50)
-    is_shared: bool = False
 
 
 class AccountUpdate(BaseModel):

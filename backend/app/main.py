@@ -180,11 +180,12 @@ def _check_ownership(entry, user: Optional[models.User]) -> None:
     raise HTTPException(status_code=403, detail="Not authorized to modify this entry")
 
 
-def _resolve_household(is_shared: bool, user: Optional[models.User]) -> Optional[int]:
-    """Return household_id to stamp on a row, or None."""
-    if is_shared and user and user.household_id:
-        return user.household_id
-    return None
+def _household_stamp(user: Optional[models.User]) -> Optional[int]:
+    """Household members share everything automatically: every row a household
+    member creates or edits is stamped with their household_id. Solo users
+    (no household) keep working exactly as before - their rows have no
+    household_id and stay private to them."""
+    return user.household_id if user else None
 
 
 _reset_attempts: dict = defaultdict(list)
@@ -391,7 +392,6 @@ investment_router = APIRouter(prefix="/investment-funds", tags=["investments"])
 @investment_router.get("", response_model=list[schemas.InvestmentFundOut])
 def list_funds(
     fund_type: Optional[str] = Query(None),
-    owner_user_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -399,18 +399,6 @@ def list_funds(
     q = _apply_visibility_filter(q, models.InvestmentFund, current_user)
     if fund_type:
         q = q.filter(models.InvestmentFund.fund_type == fund_type)
-    if owner_user_id is not None:
-        # Security: only allow filtering by self or a confirmed household member
-        is_self = owner_user_id == current_user.id
-        is_household_member = (
-            current_user.household_id is not None
-            and db.query(models.User).filter(
-                models.User.id == owner_user_id,
-                models.User.household_id == current_user.household_id,
-            ).first() is not None
-        )
-        if is_self or is_household_member:
-            q = q.filter(models.InvestmentFund.user_id == owner_user_id)
     return q.order_by(models.InvestmentFund.created_at).all()
 
 
@@ -422,7 +410,7 @@ def create_fund(
 ):
     fund = models.InvestmentFund(
         user_id=current_user.id,
-        household_id=_resolve_household(payload.is_shared, current_user),
+        household_id=_household_stamp(current_user),
         fund_type=payload.fund_type,
         name=payload.name,
         current_balance=payload.current_balance,
@@ -454,6 +442,7 @@ def update_fund(
     fund.monthly_contribution = payload.monthly_contribution
     fund.management_fee_pct = payload.management_fee_pct
     fund.salary = payload.salary
+    fund.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(fund)
     return fund
@@ -498,10 +487,9 @@ def create_expense(
     data = expense.model_dump()
     if data.get("date") is None:
         data["date"] = datetime.now(timezone.utc).date()
-    is_shared = data.pop("is_shared", False)
     if current_user:
         data["user_id"] = current_user.id
-        data["household_id"] = _resolve_household(is_shared, current_user)
+        data["household_id"] = _household_stamp(current_user)
     db_expense = models.Expense(**data)
     db.add(db_expense)
     db.commit()
@@ -527,6 +515,7 @@ def update_expense(
         expense.category = payload.category
     if payload.date is not None:
         expense.date = payload.date
+    expense.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(expense)
     return expense
@@ -568,10 +557,9 @@ def create_income(
     data = income.model_dump()
     if data.get("date") is None:
         data["date"] = datetime.now(timezone.utc).date()
-    is_shared = data.pop("is_shared", False)
     if current_user:
         data["user_id"] = current_user.id
-        data["household_id"] = _resolve_household(is_shared, current_user)
+        data["household_id"] = _household_stamp(current_user)
     db_income = models.Income(**data)
     db.add(db_income)
     db.commit()
@@ -597,6 +585,7 @@ def update_income(
         income.source = payload.source
     if payload.date is not None:
         income.date = payload.date
+    income.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(income)
     return income
@@ -670,10 +659,9 @@ def create_recurring(
     current_user: Optional[models.User] = Depends(get_optional_user),
 ):
     data = payload.model_dump()
-    is_shared = data.pop("is_shared", False)
     if current_user:
         data["user_id"] = current_user.id
-        data["household_id"] = _resolve_household(is_shared, current_user)
+        data["household_id"] = _household_stamp(current_user)
     entry = models.RecurringEntry(**data)
     db.add(entry)
     db.commit()
@@ -694,6 +682,7 @@ def update_recurring(
     _check_ownership(entry, current_user)
     for key, value in payload.model_dump().items():
         setattr(entry, key, value)
+    entry.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(entry)
     return entry
@@ -771,10 +760,9 @@ def create_account(
     current_user: Optional[models.User] = Depends(get_optional_user),
 ):
     data = payload.model_dump()
-    is_shared = data.pop("is_shared", False)
     if current_user:
         data["user_id"] = current_user.id
-        data["household_id"] = _resolve_household(is_shared, current_user)
+        data["household_id"] = _household_stamp(current_user)
     account = models.Account(**data)
     db.add(account)
     db.commit()
@@ -795,6 +783,7 @@ def update_account(
     _check_ownership(account, current_user)
     for key, value in payload.model_dump().items():
         setattr(account, key, value)
+    account.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(account)
     return account

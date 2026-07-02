@@ -48,6 +48,7 @@
     "personal": "Personal",
     "shared": "Shared (Household)",
     "visibility": "Visibility",
+    "autoSharedNote": "This will be shared with your household — both of you can see and edit it.",
     "optional": "optional",
     "addExpense": "Add expense",
     "editExpense": "Edit expense",

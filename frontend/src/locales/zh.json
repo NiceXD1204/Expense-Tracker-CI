@@ -48,6 +48,7 @@
     "personal": "个人",
     "shared": "共享（家庭）",
     "visibility": "可见性",
+    "autoSharedNote": "这将与您的家庭共享——你们双方都可以查看和编辑。",
     "optional": "可选",
     "addExpense": "添加支出",
     "editExpense": "编辑支出",

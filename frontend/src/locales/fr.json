@@ -48,6 +48,7 @@
     "personal": "Personnel",
     "shared": "Partagé (Foyer)",
     "visibility": "Visibilité",
+    "autoSharedNote": "Ceci sera partagé avec votre foyer — vous pourrez tous les deux le voir et le modifier.",
     "optional": "optionnel",
     "addExpense": "Ajouter une dépense",
     "editExpense": "Modifier la dépense",

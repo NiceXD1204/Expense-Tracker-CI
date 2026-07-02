@@ -48,6 +48,7 @@
     "personal": "شخصي",
     "shared": "مشترك (المنزل)",
     "visibility": "الرؤية",
+    "autoSharedNote": "سيتم مشاركة هذا مع أسرتك — يمكن لكليكما رؤيته وتعديله.",
     "optional": "اختياري",
     "addExpense": "إضافة مصروف",
     "editExpense": "تعديل مصروف",

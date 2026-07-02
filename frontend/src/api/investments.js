@@ -1,9 +1,8 @@
 import api from './expenses'
 
-export async function getInvestmentFunds(fundType, ownerUserId) {
+export async function getInvestmentFunds(fundType) {
   const params = {}
   if (fundType) params.fund_type = fundType
-  if (ownerUserId != null) params.owner_user_id = ownerUserId
   const { data } = await api.get('/investment-funds', { params })
   return data
 }

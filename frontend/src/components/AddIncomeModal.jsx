@@ -12,7 +12,6 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
   const [amount, setAmount] = useState('')
   const [source, setSource] = useState(INCOME_SOURCES[0])
   const [date, setDate] = useState(() => toDateInputValue())
-  const [isShared, setIsShared] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -23,13 +22,11 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
       setAmount(String(entry.amount))
       setSource(entry.source)
       setDate(toDateInputValue(entry.date))
-      setIsShared(Boolean(entry.household_id))
     } else {
       setDescription('')
       setAmount('')
       setSource(INCOME_SOURCES[0])
       setDate(toDateInputValue())
-      setIsShared(false)
     }
     setError(null)
   }, [open, entry])
@@ -51,7 +48,7 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
     setSubmitting(true)
     setError(null)
     try {
-      await onSubmit({ description: description.trim(), amount: parsedAmount, source, date, is_shared: isShared })
+      await onSubmit({ description: description.trim(), amount: parsedAmount, source, date })
       handleClose()
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Failed to save income. Please try again.')
@@ -132,36 +129,10 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
             />
           </div>
 
-          {user?.household_id && !isEdit && (
-            <div>
-              <label className="mb-1 block text-sm font-medium text-ink">
-                {t('common.visibility')}
-              </label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsShared(false)}
-                  className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors ${
-                    !isShared
-                      ? 'border-accent bg-accent text-white'
-                      : 'border-card-border text-muted hover:border-accent/40'
-                  }`}
-                >
-                  🔒 {t('common.personal')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsShared(true)}
-                  className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors ${
-                    isShared
-                      ? 'border-accent bg-accent text-white'
-                      : 'border-card-border text-muted hover:border-accent/40'
-                  }`}
-                >
-                  👥 {t('common.shared')}
-                </button>
-              </div>
-            </div>
+          {user?.household_id && (
+            <p className="rounded-lg bg-accent/10 px-3 py-2 text-xs font-medium text-accent">
+              👥 {t('common.autoSharedNote')}
+            </p>
           )}
 
           {error && <p className="text-sm text-expense">{error}</p>}
