@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import AddIncomeModal from '../components/AddIncomeModal'
 import EmptyState from '../components/EmptyState'
 import IncomeRow from '../components/IncomeRow'
@@ -10,6 +11,7 @@ import useIncome from '../hooks/useIncome'
 import { formatCurrency, parseDateOnly } from '../utils/format'
 
 export default function Income() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { income, loading, error, create, update, remove } = useIncome()
   const incomeModal = useEntryModal()
@@ -40,14 +42,14 @@ export default function Income() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Income</h1>
-          <p className="text-sm text-muted">Track money coming in</p>
+          <h1 className="text-2xl font-bold text-ink">{t('income.title')}</h1>
+          <p className="text-sm text-muted">{t('income.subtitle')}</p>
         </div>
         <button
           onClick={incomeModal.openAdd}
           className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
         >
-          + Add income
+          + {t('income.add')}
         </button>
       </div>
 
@@ -62,23 +64,23 @@ export default function Income() {
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
-            <KPICard label="Husband income" value={formatCurrency(totals.husband)} hint="all time" />
-            <KPICard label="Wife income" value={formatCurrency(totals.wife)} hint="all time" />
-            <KPICard label="Other income" value={formatCurrency(totals.other)} hint="all time" />
-            <KPICard label="Total income" value={formatCurrency(totals.total)} accent hint="all time" />
+            <KPICard label={t('income.husband')} value={formatCurrency(totals.husband)} hint={t('common.allTime')} />
+            <KPICard label={t('income.wife')} value={formatCurrency(totals.wife)} hint={t('common.allTime')} />
+            <KPICard label={t('income.other')} value={formatCurrency(totals.other)} hint={t('common.allTime')} />
+            <KPICard label={t('income.total')} value={formatCurrency(totals.total)} accent hint={t('common.allTime')} />
           </>
         )}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-card-border bg-card">
         <div className="border-b border-card-border p-5">
-          <h2 className="text-sm font-semibold text-ink">All income entries</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('income.allEntries')}</h2>
         </div>
         {loading ? (
           <LoadingSkeleton rows={6} />
         ) : sorted.length === 0 ? (
           <div className="p-5">
-            <EmptyState icon="💰" title="No income yet" message="Add your first income entry to get started." />
+            <EmptyState icon="💰" title={t('income.noIncomeYet')} message={t('income.noIncomeHint')} />
           </div>
         ) : (
           sorted.map((entry) => (

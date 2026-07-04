@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import CategoryLegendList from '../components/CategoryLegendList'
 import DonutChart from '../components/DonutChart'
@@ -12,6 +13,7 @@ import { getChartTheme } from '../utils/chartTheme'
 import { daysInMonth, formatCurrency, isSameMonth, monthLabel, parseDateOnly } from '../utils/format'
 
 export default function Analytics() {
+  const { t } = useTranslation()
   useCurrencyTick()
   const { expenses, loading, remove } = useExpenses()
   const { isDark, resolved } = useTheme()
@@ -57,13 +59,13 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-ink">Analytics</h1>
-        <p className="text-sm text-muted">Deeper look at your spending patterns</p>
+        <h1 className="text-2xl font-bold text-ink">{t('analytics.title')}</h1>
+        <p className="text-sm text-muted">{t('analytics.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-card-border bg-card p-5">
-          <h2 className="mb-4 text-sm font-semibold text-ink">Spending by day — {monthLabel(today)}</h2>
+          <h2 className="mb-4 text-sm font-semibold text-ink">{t('analytics.spendingByDay', { month: monthLabel(today) })}</h2>
           {loading ? (
             <SkeletonChart />
           ) : (
@@ -85,7 +87,7 @@ export default function Analytics() {
         </div>
 
         <div className="rounded-xl border border-card-border bg-card p-5">
-          <h2 className="mb-4 text-sm font-semibold text-ink">6-month trend</h2>
+          <h2 className="mb-4 text-sm font-semibold text-ink">{t('analytics.sixMonthTrend')}</h2>
           {loading ? (
             <SkeletonChart />
           ) : (
@@ -106,11 +108,11 @@ export default function Analytics() {
         </div>
 
         <div className="rounded-xl border border-card-border bg-card p-5">
-          <h2 className="mb-4 text-sm font-semibold text-ink">Category breakdown — {monthLabel(today)}</h2>
+          <h2 className="mb-4 text-sm font-semibold text-ink">{t('analytics.categoryBreakdown', { month: monthLabel(today) })}</h2>
           {loading ? (
             <SkeletonChart />
           ) : categoryTotals.length === 0 ? (
-            <EmptyState icon="📊" title="No data yet" />
+            <EmptyState icon="📊" title={t('analytics.noData')} />
           ) : (
             <>
               <DonutChart data={categoryTotals} donut={false} />
@@ -121,13 +123,13 @@ export default function Analytics() {
 
         <div className="rounded-xl border border-card-border bg-card">
           <div className="border-b border-card-border p-5">
-            <h2 className="text-sm font-semibold text-ink">Top 5 expenses — {monthLabel(today)}</h2>
+            <h2 className="text-sm font-semibold text-ink">{t('analytics.topExpenses', { month: monthLabel(today) })}</h2>
           </div>
           {loading ? (
-            <div className="p-5 text-sm text-muted">Loading…</div>
+            <div className="p-5 text-sm text-muted">{t('common.loading')}</div>
           ) : topExpenses.length === 0 ? (
             <div className="p-5">
-              <EmptyState icon="🏆" title="No expenses this month" />
+              <EmptyState icon="🏆" title={t('analytics.noExpenses')} />
             </div>
           ) : (
             topExpenses.map((expense) => <TransactionRow key={expense.id} expense={expense} onDelete={remove} />)

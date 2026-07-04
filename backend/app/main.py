@@ -1,21 +1,30 @@
 import calendar
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
+from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from . import models, schemas
+from .auth import get_current_user, get_optional_user, hash_password, verify_password, create_access_token
 from .database import SessionLocal, engine, get_db
-from .migrations import backfill_dates, backfill_subscription_flag, ensure_schema
+from .migrations import (
+    backfill_dates,
+    backfill_household_history_access,
+    backfill_share_household_data,
+    backfill_subscription_flag,
+    ensure_schema,
+)
 
 
 def generate_recurring_for_month(db: Session, year: int, month: int) -> int:
     """Create the real Expense/Income row for every active recurring template
-    for the given month, unless one already exists for it (matched via
-    recurring_id + falling within that month) - safe to call repeatedly."""
+    for the given month, unless one already exists for it - safe to call repeatedly."""
     last_day = calendar.monthrange(year, month)[1]
     month_start = date(year, month, 1)
     month_end = date(year, month, last_day)
@@ -45,6 +54,8 @@ def generate_recurring_for_month(db: Session, year: int, month: int) -> int:
                     category=tpl.category,
                     date=target_date,
                     recurring_id=tpl.id,
+                    user_id=tpl.user_id,
+                    household_id=tpl.household_id,
                 )
             )
             created += 1
@@ -67,6 +78,8 @@ def generate_recurring_for_month(db: Session, year: int, month: int) -> int:
                     source=tpl.source,
                     date=target_date,
                     recurring_id=tpl.id,
+                    user_id=tpl.user_id,
+                    household_id=tpl.household_id,
                 )
             )
             created += 1
@@ -83,13 +96,12 @@ def _generate_current_month(db: Session) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Additive schema patch + backfill for tables that already existed before
-    # the `date`/`recurring_id` columns were introduced (create_all() never
-    # alters existing tables - see migrations.py).
     ensure_schema(engine)
     models.Base.metadata.create_all(bind=engine)
     backfill_dates(SessionLocal, models)
     backfill_subscription_flag(SessionLocal, models)
+    backfill_household_history_access(SessionLocal, models)
+    backfill_share_household_data(SessionLocal, models)
 
     db = SessionLocal()
     try:
@@ -102,26 +114,45 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Expense Tracker API", version="1.0.0", lifespan=lifespan)
 
-# Exposes /metrics for Prometheus (scraped via the backend chart's ServiceMonitor).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 Instrumentator().instrument(app).expose(app)
 
 
-def _get_settings(db: Session) -> models.BudgetSettings:
-    settings = db.query(models.BudgetSettings).first()
+def _get_settings(db: Session, user: Optional[models.User] = None) -> models.BudgetSettings:
+    q = db.query(models.BudgetSettings)
+    settings = None
+    if user:
+        # Household members share one budget-settings row (stamped with household_id).
+        if user.household_id:
+            settings = q.filter(models.BudgetSettings.household_id == user.household_id).first()
+        if settings is None:
+            settings = q.filter(models.BudgetSettings.user_id == user.id).first()
+    else:
+        settings = q.first()
     if settings is None:
-        settings = models.BudgetSettings(monthly_savings_goal=0.0, monthly_spending_limit=0.0)
+        settings = models.BudgetSettings(
+            monthly_savings_goal=0.0,
+            monthly_spending_limit=0.0,
+            user_id=user.id if user else None,
+            household_id=user.household_id if user else None,
+        )
         db.add(settings)
         db.commit()
         db.refresh(settings)
     return settings
 
 
-def _income_by_source(db: Session) -> schemas.IncomeBySource:
-    rows = (
-        db.query(models.Income.source, func.sum(models.Income.amount))
-        .group_by(models.Income.source)
-        .all()
-    )
+def _income_by_source(db: Session, user: Optional[models.User] = None) -> schemas.IncomeBySource:
+    q = db.query(models.Income.source, func.sum(models.Income.amount))
+    q = _apply_visibility_filter(q, models.Income, user)
+    rows = q.group_by(models.Income.source).all()
     totals = {"husband": 0.0, "wife": 0.0, "other": 0.0}
     for source, total in rows:
         key = source if source in totals else "other"
@@ -133,26 +164,420 @@ def _income_by_source(db: Session) -> schemas.IncomeBySource:
     )
 
 
+def _apply_visibility_filter(query, model, user: Optional[models.User]):
+    """Filter rows visible to the current user: own rows + household shared rows.
+    When unauthenticated (user=None), all rows are returned for backward-compat.
+
+    A household member whose can_view_history is False only sees shared rows
+    created on/after the day they joined - older household history stays
+    hidden from them until the creator turns it back on. The creator's own
+    can_view_history is never toggled off, so they always see everything."""
+    if user is None:
+        return query
+    conditions = [model.user_id == user.id, model.user_id.is_(None)]
+    if user.household_id:
+        household_cond = model.household_id == user.household_id
+        if not user.can_view_history and user.household_joined_at:
+            household_cond = and_(household_cond, model.created_at >= user.household_joined_at)
+        conditions.append(household_cond)
+    return query.filter(or_(*conditions))
+
+
+def _check_ownership(entry, user: Optional[models.User]) -> None:
+    """Raise 403 if the authenticated user doesn't own or share this entry, or
+    (for household-shared entries) if it predates their history access."""
+    if user is None:
+        return
+    if entry.user_id is None:
+        return
+    if entry.user_id == user.id:
+        return
+    if user.household_id and entry.household_id == user.household_id:
+        if user.can_view_history or not user.household_joined_at:
+            return
+        entry_created_at = getattr(entry, "created_at", None)
+        if entry_created_at is not None and entry_created_at >= user.household_joined_at:
+            return
+    raise HTTPException(status_code=403, detail="Not authorized to modify this entry")
+
+
+def _household_stamp(user: Optional[models.User]) -> Optional[int]:
+    """Household members share everything automatically: every row a household
+    member creates or edits is stamped with their household_id. Solo users
+    (no household) keep working exactly as before - their rows have no
+    household_id and stay private to them."""
+    return user.household_id if user else None
+
+
+_reset_attempts: dict = defaultdict(list)
+
+
+def _check_reset_rate_limit(email: str) -> bool:
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(minutes=15)
+    _reset_attempts[email] = [t for t in _reset_attempts[email] if t > cutoff]
+    if len(_reset_attempts[email]) >= 5:
+        return False
+    _reset_attempts[email].append(now)
+    return True
+
+
+# ---------- Healthcheck ----------
+
+
 @app.get("/healthz")
 def health():
-    """Used by Kubernetes liveness/readiness probes."""
     return {"status": "ok"}
+
+
+# ---------- Auth ----------
+
+
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@auth_router.post("/register", response_model=schemas.UserOut, status_code=201)
+def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
+    if db.query(models.User).filter(models.User.email == payload.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    household = None
+    if payload.invite_code:
+        household = db.query(models.Household).filter(models.Household.invite_code == payload.invite_code.strip()).first()
+        if not household:
+            raise HTTPException(status_code=400, detail="Invalid invite code")
+
+    user = models.User(
+        email=payload.email,
+        hashed_password=hash_password(payload.password),
+        display_name=payload.display_name or payload.email.split("@")[0],
+        security_question=payload.security_question,
+        security_answer_hash=hash_password(payload.security_answer.strip().lower()) if payload.security_answer else None,
+        household_id=household.id if household else None,
+        household_joined_at=datetime.now(timezone.utc) if household else None,
+        can_view_history=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@auth_router.post("/login", response_model=schemas.TokenOut)
+def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user or not verify_password(payload.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(user.id, remember_me=payload.remember_me)
+    return schemas.TokenOut(access_token=token)
+
+
+@auth_router.get("/me", response_model=schemas.UserOut)
+def me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+
+@auth_router.put("/profile", response_model=schemas.UserOut)
+def update_profile(
+    payload: schemas.ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.first_name = payload.first_name
+    current_user.last_name = payload.last_name
+    current_user.display_name = payload.display_name or current_user.display_name
+    if payload.security_question is not None:
+        current_user.security_question = payload.security_question
+    if payload.security_answer:
+        current_user.security_answer_hash = hash_password(payload.security_answer.strip().lower())
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@auth_router.post("/avatar", response_model=schemas.UserOut)
+def update_avatar(
+    payload: schemas.AvatarUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.avatar_data = payload.avatar_data
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@auth_router.post("/forgot-password/question")
+def get_forgot_password_question(payload: schemas.ForgotPasswordQuestion, db: Session = Depends(get_db)):
+    """Returns the security question for the email. Always returns 200 with a generic
+    structure to prevent email enumeration attacks."""
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user or not user.security_question:
+        return {"question": None}
+    return {"question": user.security_question}
+
+
+@auth_router.post("/reset-password")
+def reset_password(payload: schemas.ForgotPasswordReset, db: Session = Depends(get_db)):
+    if not _check_reset_rate_limit(payload.email):
+        raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user or not user.security_answer_hash:
+        raise HTTPException(status_code=400, detail="Cannot reset password for this account.")
+    if not verify_password(payload.answer.strip().lower(), user.security_answer_hash):
+        raise HTTPException(status_code=400, detail="Incorrect answer.")
+    user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    return {"detail": "Password reset successfully."}
+
+
+app.include_router(auth_router)
+
+
+# ---------- Household ----------
+
+
+household_router = APIRouter(prefix="/household", tags=["household"])
+
+
+@household_router.post("/create", response_model=schemas.HouseholdOut, status_code=201)
+def create_household(
+    payload: schemas.HouseholdCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.household_id:
+        raise HTTPException(status_code=400, detail="Already in a household. Leave first.")
+    household = models.Household(name=payload.name, created_by=current_user.id)
+    db.add(household)
+    db.flush()
+    current_user.household_id = household.id
+    current_user.household_joined_at = datetime.now(timezone.utc)
+    current_user.can_view_history = True
+    db.commit()
+    db.refresh(household)
+    db.refresh(current_user)
+    backfill_share_household_data(SessionLocal, models)
+    return household
+
+
+@household_router.post("/join")
+def join_household(
+    payload: schemas.HouseholdJoin,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.household_id:
+        raise HTTPException(status_code=400, detail="Already in a household. Leave first.")
+    household = db.query(models.Household).filter(models.Household.invite_code == payload.invite_code).first()
+    if not household:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+    current_user.household_id = household.id
+    current_user.household_joined_at = datetime.now(timezone.utc)
+    current_user.can_view_history = True
+    db.commit()
+    db.refresh(household)
+    backfill_share_household_data(SessionLocal, models)
+    return household
+
+
+@household_router.get("/me", response_model=schemas.HouseholdOut)
+def get_my_household(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=404, detail="Not in a household")
+    household = db.get(models.Household, current_user.household_id)
+    return household
+
+
+@household_router.post("/leave")
+def leave_household(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.household_id = None
+    current_user.household_joined_at = None
+    current_user.can_view_history = True
+    db.commit()
+    return {"message": "Left household"}
+
+
+@household_router.get("/members", response_model=list[schemas.HouseholdMemberOut])
+def get_household_members(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        return []
+    return (
+        db.query(models.User)
+        .filter(models.User.household_id == current_user.household_id)
+        .all()
+    )
+
+
+@household_router.delete("/members/{user_id}")
+def kick_member(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="Not in a household")
+    household = db.get(models.Household, current_user.household_id)
+    if household is None or household.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the household creator can remove members")
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Use leave instead of removing yourself")
+
+    target = db.get(models.User, user_id)
+    if target is None or target.household_id != current_user.household_id:
+        raise HTTPException(status_code=404, detail="Member not found in this household")
+
+    target.household_id = None
+    target.household_joined_at = None
+    target.can_view_history = True
+    db.commit()
+    return {"message": "Member removed"}
+
+
+@household_router.put("/members/{user_id}/history-access")
+def set_member_history_access(
+    user_id: int,
+    payload: schemas.MemberHistoryAccessUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="Not in a household")
+    household = db.get(models.Household, current_user.household_id)
+    if household is None or household.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the household creator can change this")
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="The creator always has full history access")
+
+    target = db.get(models.User, user_id)
+    if target is None or target.household_id != current_user.household_id:
+        raise HTTPException(status_code=404, detail="Member not found in this household")
+
+    target.can_view_history = payload.can_view_history
+    db.commit()
+    return {"message": "Updated"}
+
+
+app.include_router(household_router)
+
+
+# ---------- Investment Funds ----------
+
+
+investment_router = APIRouter(prefix="/investment-funds", tags=["investments"])
+
+
+@investment_router.get("", response_model=list[schemas.InvestmentFundOut])
+def list_funds(
+    fund_type: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    q = db.query(models.InvestmentFund)
+    q = _apply_visibility_filter(q, models.InvestmentFund, current_user)
+    if fund_type:
+        q = q.filter(models.InvestmentFund.fund_type == fund_type)
+    return q.order_by(models.InvestmentFund.created_at).all()
+
+
+@investment_router.post("", response_model=schemas.InvestmentFundOut, status_code=201)
+def create_fund(
+    payload: schemas.InvestmentFundCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    fund = models.InvestmentFund(
+        user_id=current_user.id,
+        household_id=_household_stamp(current_user),
+        fund_type=payload.fund_type,
+        name=payload.name,
+        current_balance=payload.current_balance,
+        annual_return_pct=payload.annual_return_pct,
+        monthly_contribution=payload.monthly_contribution,
+        management_fee_pct=payload.management_fee_pct,
+        salary=payload.salary,
+    )
+    db.add(fund)
+    db.commit()
+    db.refresh(fund)
+    return fund
+
+
+@investment_router.put("/{fund_id}", response_model=schemas.InvestmentFundOut)
+def update_fund(
+    fund_id: int,
+    payload: schemas.InvestmentFundUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    fund = db.get(models.InvestmentFund, fund_id)
+    if not fund:
+        raise HTTPException(status_code=404, detail="Fund not found")
+    _check_ownership(fund, current_user)
+    fund.name = payload.name
+    fund.current_balance = payload.current_balance
+    fund.annual_return_pct = payload.annual_return_pct
+    fund.monthly_contribution = payload.monthly_contribution
+    fund.management_fee_pct = payload.management_fee_pct
+    fund.salary = payload.salary
+    fund.household_id = _household_stamp(current_user)
+    db.commit()
+    db.refresh(fund)
+    return fund
+
+
+@investment_router.delete("/{fund_id}", status_code=204)
+def delete_fund(
+    fund_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    fund = db.get(models.InvestmentFund, fund_id)
+    if not fund:
+        raise HTTPException(status_code=404, detail="Fund not found")
+    _check_ownership(fund, current_user)
+    db.delete(fund)
+    db.commit()
+
+
+app.include_router(investment_router)
 
 
 # ---------- Expenses ----------
 
 
 @app.get("/expenses", response_model=list[schemas.ExpenseOut])
-def list_expenses(db: Session = Depends(get_db)):
+def list_expenses(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     _generate_current_month(db)
-    return db.query(models.Expense).order_by(models.Expense.date.desc(), models.Expense.created_at.desc()).all()
+    q = db.query(models.Expense).order_by(models.Expense.date.desc(), models.Expense.created_at.desc())
+    return _apply_visibility_filter(q, models.Expense, current_user).all()
 
 
 @app.post("/expenses", response_model=schemas.ExpenseOut, status_code=201)
-def create_expense(expense: schemas.ExpenseCreate, db: Session = Depends(get_db)):
+def create_expense(
+    expense: schemas.ExpenseCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     data = expense.model_dump()
     if data.get("date") is None:
         data["date"] = datetime.now(timezone.utc).date()
+    if current_user:
+        data["user_id"] = current_user.id
+        data["household_id"] = _household_stamp(current_user)
     db_expense = models.Expense(**data)
     db.add(db_expense)
     db.commit()
@@ -161,10 +586,16 @@ def create_expense(expense: schemas.ExpenseCreate, db: Session = Depends(get_db)
 
 
 @app.put("/expenses/{expense_id}", response_model=schemas.ExpenseOut)
-def update_expense(expense_id: int, payload: schemas.ExpenseUpdate, db: Session = Depends(get_db)):
+def update_expense(
+    expense_id: int,
+    payload: schemas.ExpenseUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     expense = db.get(models.Expense, expense_id)
     if expense is None:
         raise HTTPException(status_code=404, detail="Expense not found")
+    _check_ownership(expense, current_user)
     expense.amount = payload.amount
     if payload.description is not None:
         expense.description = payload.description
@@ -172,16 +603,22 @@ def update_expense(expense_id: int, payload: schemas.ExpenseUpdate, db: Session 
         expense.category = payload.category
     if payload.date is not None:
         expense.date = payload.date
+    expense.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(expense)
     return expense
 
 
 @app.delete("/expenses/{expense_id}", status_code=204)
-def delete_expense(expense_id: int, db: Session = Depends(get_db)):
+def delete_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     expense = db.get(models.Expense, expense_id)
     if expense is None:
         raise HTTPException(status_code=404, detail="Expense not found")
+    _check_ownership(expense, current_user)
     db.delete(expense)
     db.commit()
 
@@ -190,16 +627,27 @@ def delete_expense(expense_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/income", response_model=list[schemas.IncomeOut])
-def list_income(db: Session = Depends(get_db)):
+def list_income(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     _generate_current_month(db)
-    return db.query(models.Income).order_by(models.Income.date.desc(), models.Income.created_at.desc()).all()
+    q = db.query(models.Income).order_by(models.Income.date.desc(), models.Income.created_at.desc())
+    return _apply_visibility_filter(q, models.Income, current_user).all()
 
 
 @app.post("/income", response_model=schemas.IncomeOut, status_code=201)
-def create_income(income: schemas.IncomeCreate, db: Session = Depends(get_db)):
+def create_income(
+    income: schemas.IncomeCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     data = income.model_dump()
     if data.get("date") is None:
         data["date"] = datetime.now(timezone.utc).date()
+    if current_user:
+        data["user_id"] = current_user.id
+        data["household_id"] = _household_stamp(current_user)
     db_income = models.Income(**data)
     db.add(db_income)
     db.commit()
@@ -208,10 +656,16 @@ def create_income(income: schemas.IncomeCreate, db: Session = Depends(get_db)):
 
 
 @app.put("/income/{income_id}", response_model=schemas.IncomeOut)
-def update_income(income_id: int, payload: schemas.IncomeUpdate, db: Session = Depends(get_db)):
+def update_income(
+    income_id: int,
+    payload: schemas.IncomeUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     income = db.get(models.Income, income_id)
     if income is None:
         raise HTTPException(status_code=404, detail="Income not found")
+    _check_ownership(income, current_user)
     income.amount = payload.amount
     if payload.description is not None:
         income.description = payload.description
@@ -219,38 +673,54 @@ def update_income(income_id: int, payload: schemas.IncomeUpdate, db: Session = D
         income.source = payload.source
     if payload.date is not None:
         income.date = payload.date
+    income.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(income)
     return income
 
 
 @app.delete("/income/{income_id}", status_code=204)
-def delete_income(income_id: int, db: Session = Depends(get_db)):
+def delete_income(
+    income_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     income = db.get(models.Income, income_id)
     if income is None:
         raise HTTPException(status_code=404, detail="Income not found")
+    _check_ownership(income, current_user)
     db.delete(income)
     db.commit()
 
 
 @app.get("/income/summary", response_model=schemas.IncomeSummary)
-def income_summary(db: Session = Depends(get_db)):
-    by_source = _income_by_source(db)
+def income_summary(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    by_source = _income_by_source(db, current_user)
     total = round(by_source.husband + by_source.wife + by_source.other, 2)
     return schemas.IncomeSummary(total=total, by_source=by_source)
 
 
-# ---------- Budget settings (single config row) ----------
+# ---------- Budget settings ----------
 
 
 @app.get("/budget-settings", response_model=schemas.BudgetSettingsOut)
-def get_budget_settings(db: Session = Depends(get_db)):
-    return _get_settings(db)
+def get_budget_settings(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    return _get_settings(db, current_user)
 
 
 @app.put("/budget-settings", response_model=schemas.BudgetSettingsOut)
-def update_budget_settings(payload: schemas.BudgetSettingsUpdate, db: Session = Depends(get_db)):
-    settings = _get_settings(db)
+def update_budget_settings(
+    payload: schemas.BudgetSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    settings = _get_settings(db, current_user)
     settings.monthly_savings_goal = payload.monthly_savings_goal
     settings.monthly_spending_limit = payload.monthly_spending_limit
     db.commit()
@@ -258,17 +728,77 @@ def update_budget_settings(payload: schemas.BudgetSettingsUpdate, db: Session = 
     return settings
 
 
+@app.get("/budgets/categories", response_model=list[schemas.CategoryBudgetOut])
+def list_category_budgets(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    q = db.query(models.CategoryBudget)
+    if current_user and current_user.household_id:
+        q = q.filter(models.CategoryBudget.household_id == current_user.household_id)
+        if not current_user.can_view_history and current_user.household_joined_at:
+            q = q.filter(models.CategoryBudget.created_at >= current_user.household_joined_at)
+    elif current_user:
+        q = q.filter(models.CategoryBudget.user_id == current_user.id)
+    else:
+        q = q.filter(models.CategoryBudget.user_id.is_(None), models.CategoryBudget.household_id.is_(None))
+    return q.all()
+
+
+@app.put("/budgets/categories", response_model=schemas.CategoryBudgetOut)
+def upsert_category_budget(
+    payload: schemas.CategoryBudgetUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    # Household members share one row per category (stamped with household_id),
+    # same pattern as BudgetSettings, so both partners edit the same numbers.
+    q = db.query(models.CategoryBudget).filter(models.CategoryBudget.category == payload.category)
+    if current_user and current_user.household_id:
+        row = q.filter(models.CategoryBudget.household_id == current_user.household_id).first()
+    elif current_user:
+        row = q.filter(models.CategoryBudget.user_id == current_user.id).first()
+    else:
+        row = q.filter(models.CategoryBudget.user_id.is_(None), models.CategoryBudget.household_id.is_(None)).first()
+
+    if row is None:
+        row = models.CategoryBudget(
+            category=payload.category,
+            amount=payload.amount,
+            user_id=current_user.id if current_user else None,
+            household_id=_household_stamp(current_user),
+        )
+        db.add(row)
+    else:
+        row.amount = payload.amount
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 # ---------- Recurring entries ----------
 
 
 @app.get("/recurring", response_model=list[schemas.RecurringOut])
-def list_recurring(db: Session = Depends(get_db)):
-    return db.query(models.RecurringEntry).order_by(models.RecurringEntry.created_at.desc()).all()
+def list_recurring(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    q = db.query(models.RecurringEntry).order_by(models.RecurringEntry.created_at.desc())
+    return _apply_visibility_filter(q, models.RecurringEntry, current_user).all()
 
 
 @app.post("/recurring", response_model=schemas.RecurringOut, status_code=201)
-def create_recurring(payload: schemas.RecurringCreate, db: Session = Depends(get_db)):
-    entry = models.RecurringEntry(**payload.model_dump())
+def create_recurring(
+    payload: schemas.RecurringCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    data = payload.model_dump()
+    if current_user:
+        data["user_id"] = current_user.id
+        data["household_id"] = _household_stamp(current_user)
+    entry = models.RecurringEntry(**data)
     db.add(entry)
     db.commit()
     db.refresh(entry)
@@ -276,24 +806,34 @@ def create_recurring(payload: schemas.RecurringCreate, db: Session = Depends(get
 
 
 @app.put("/recurring/{recurring_id}", response_model=schemas.RecurringOut)
-def update_recurring(recurring_id: int, payload: schemas.RecurringUpdate, db: Session = Depends(get_db)):
+def update_recurring(
+    recurring_id: int,
+    payload: schemas.RecurringUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     entry = db.get(models.RecurringEntry, recurring_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Recurring entry not found")
+    _check_ownership(entry, current_user)
     for key, value in payload.model_dump().items():
         setattr(entry, key, value)
+    entry.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(entry)
     return entry
 
 
 @app.delete("/recurring/{recurring_id}", status_code=204)
-def delete_recurring(recurring_id: int, db: Session = Depends(get_db)):
+def delete_recurring(
+    recurring_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     entry = db.get(models.RecurringEntry, recurring_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Recurring entry not found")
-    # The transactions this template already generated become standalone
-    # entries instead of being cascade-deleted along with the template.
+    _check_ownership(entry, current_user)
     db.query(models.Expense).filter(models.Expense.recurring_id == recurring_id).update({"recurring_id": None})
     db.query(models.Income).filter(models.Income.recurring_id == recurring_id).update({"recurring_id": None})
     db.delete(entry)
@@ -307,12 +847,15 @@ def run_recurring(db: Session = Depends(get_db)):
     return {"created": created}
 
 
-# ---------- Subscriptions (recurring expenses flagged is_subscription) ----------
+# ---------- Subscriptions ----------
 
 
 @app.get("/subscriptions", response_model=schemas.SubscriptionsOut)
-def list_subscriptions(db: Session = Depends(get_db)):
-    items = (
+def list_subscriptions(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    q = (
         db.query(models.RecurringEntry)
         .filter(
             models.RecurringEntry.type == "expense",
@@ -320,8 +863,8 @@ def list_subscriptions(db: Session = Depends(get_db)):
             models.RecurringEntry.active.is_(True),
         )
         .order_by(models.RecurringEntry.amount.desc())
-        .all()
     )
+    items = _apply_visibility_filter(q, models.RecurringEntry, current_user).all()
     monthly_total = round(sum(item.amount for item in items), 2)
     yearly_total = round(monthly_total * 12, 2)
     return schemas.SubscriptionsOut(
@@ -334,17 +877,29 @@ def list_subscriptions(db: Session = Depends(get_db)):
     )
 
 
-# ---------- Accounts (net worth tracking) ----------
+# ---------- Accounts ----------
 
 
 @app.get("/accounts", response_model=list[schemas.AccountOut])
-def list_accounts(db: Session = Depends(get_db)):
-    return db.query(models.Account).order_by(models.Account.created_at.desc()).all()
+def list_accounts(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    q = db.query(models.Account).order_by(models.Account.created_at.desc())
+    return _apply_visibility_filter(q, models.Account, current_user).all()
 
 
 @app.post("/accounts", response_model=schemas.AccountOut, status_code=201)
-def create_account(payload: schemas.AccountCreate, db: Session = Depends(get_db)):
-    account = models.Account(**payload.model_dump())
+def create_account(
+    payload: schemas.AccountCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    data = payload.model_dump()
+    if current_user:
+        data["user_id"] = current_user.id
+        data["household_id"] = _household_stamp(current_user)
+    account = models.Account(**data)
     db.add(account)
     db.commit()
     db.refresh(account)
@@ -352,32 +907,49 @@ def create_account(payload: schemas.AccountCreate, db: Session = Depends(get_db)
 
 
 @app.put("/accounts/{account_id}", response_model=schemas.AccountOut)
-def update_account(account_id: int, payload: schemas.AccountUpdate, db: Session = Depends(get_db)):
+def update_account(
+    account_id: int,
+    payload: schemas.AccountUpdate,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     account = db.get(models.Account, account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="Account not found")
+    _check_ownership(account, current_user)
     for key, value in payload.model_dump().items():
         setattr(account, key, value)
+    account.household_id = _household_stamp(current_user)
     db.commit()
     db.refresh(account)
     return account
 
 
 @app.delete("/accounts/{account_id}", status_code=204)
-def delete_account(account_id: int, db: Session = Depends(get_db)):
+def delete_account(
+    account_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     account = db.get(models.Account, account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="Account not found")
+    _check_ownership(account, current_user)
     db.delete(account)
     db.commit()
 
 
 @app.get("/accounts/networth", response_model=schemas.NetWorthSummary)
-def get_net_worth(db: Session = Depends(get_db)):
-    total_assets = db.query(func.sum(models.Account.balance)).filter(models.Account.type == "asset").scalar() or 0.0
-    total_liabilities = (
-        db.query(func.sum(models.Account.balance)).filter(models.Account.type == "liability").scalar() or 0.0
-    )
+def get_net_worth(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
+    q_assets = db.query(func.sum(models.Account.balance)).filter(models.Account.type == "asset")
+    q_liab = db.query(func.sum(models.Account.balance)).filter(models.Account.type == "liability")
+    q_assets = _apply_visibility_filter(q_assets, models.Account, current_user)
+    q_liab = _apply_visibility_filter(q_liab, models.Account, current_user)
+    total_assets = q_assets.scalar() or 0.0
+    total_liabilities = q_liab.scalar() or 0.0
     return schemas.NetWorthSummary(
         total_assets=round(total_assets, 2),
         total_liabilities=round(total_liabilities, 2),
@@ -385,7 +957,7 @@ def get_net_worth(db: Session = Depends(get_db)):
     )
 
 
-# ---------- Cash flow forecast (read-only projection, never generates real rows) ----------
+# ---------- Forecast ----------
 
 
 def _add_months(year: int, month: int, offset: int) -> tuple[int, int]:
@@ -398,8 +970,10 @@ def forecast(
     months: int = Query(default=6, ge=1, le=12),
     starting_balance: float = Query(default=0.0),
     db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
 ):
-    templates = db.query(models.RecurringEntry).filter(models.RecurringEntry.active.is_(True)).all()
+    q = db.query(models.RecurringEntry).filter(models.RecurringEntry.active.is_(True))
+    templates = _apply_visibility_filter(q, models.RecurringEntry, current_user).all()
     expected_income = round(sum(t.amount for t in templates if t.type == "income"), 2)
     expected_expenses = round(sum(t.amount for t in templates if t.type == "expense"), 2)
     net = round(expected_income - expected_expenses, 2)
@@ -424,20 +998,25 @@ def forecast(
     return results
 
 
-# ---------- Overview ----------
+# ---------- Summary ----------
 
 
 @app.get("/summary", response_model=schemas.Overview)
-def summary(db: Session = Depends(get_db)):
+def summary(
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_user),
+):
     _generate_current_month(db)
 
-    total_expenses = db.query(func.sum(models.Expense.amount)).scalar() or 0.0
-    income_totals = _income_by_source(db)
+    q_expenses = _apply_visibility_filter(db.query(func.sum(models.Expense.amount)), models.Expense, current_user)
+    total_expenses = q_expenses.scalar() or 0.0
+
+    income_totals = _income_by_source(db, current_user)
     total_income = income_totals.husband + income_totals.wife + income_totals.other
-    settings = _get_settings(db)
+    settings = _get_settings(db, current_user)
 
     savings_actual = total_income - total_expenses
-    remaining = total_income - total_expenses - settings.monthly_savings_goal
+    remaining = savings_actual - settings.monthly_savings_goal
 
     return schemas.Overview(
         total_income=round(total_income, 2),

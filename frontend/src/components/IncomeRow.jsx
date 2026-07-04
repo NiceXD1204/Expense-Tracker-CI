@@ -22,6 +22,9 @@ export default function IncomeRow({ income, onEdit, onDelete }) {
                 <RepeatIcon />
               </span>
             )}
+            {income.household_id != null && (
+              <span title="Shared with household" className="text-xs text-accent">👥</span>
+            )}
           </p>
           <p className="text-xs text-muted">{formatNiceDate(income.date)}</p>
         </div>

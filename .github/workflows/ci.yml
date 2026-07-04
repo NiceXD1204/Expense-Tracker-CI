@@ -18,4 +18,4 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: "CI failed for PR #${{ github.event.number }} in ${{ github.repository }}: ${{ github.event.pull_request.html_url }}"
+            text: ":x: *CI failed* for PR #${{ github.event.number }}\n*Repo:* ${{ github.repository }}\n*Branch:* ${{ github.head_ref }}\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*Workflow:* ${{ github.workflow }}\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"

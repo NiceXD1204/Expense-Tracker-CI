@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import useTheme from '../hooks/useTheme'
 import { getCategoryMeta } from '../constants/categories'
 import { formatCurrency } from '../utils/format'
 
 export default function BudgetBar({ category, spent, budget }) {
+  const { t } = useTranslation()
   const { resolved } = useTheme()
   const meta = getCategoryMeta(category)
   const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0
@@ -26,7 +28,7 @@ export default function BudgetBar({ category, spent, budget }) {
         />
       </div>
       {overBudget && (
-        <p className="mt-1 text-xs font-medium text-expense">{formatCurrency(spent - budget)} over budget</p>
+        <p className="mt-1 text-xs font-medium text-expense">{t('budgets.overBy', { amount: formatCurrency(spent - budget) })}</p>
       )}
     </div>
   )

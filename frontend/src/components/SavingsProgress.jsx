@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import useTheme from '../hooks/useTheme'
 import { formatCurrency } from '../utils/format'
 
 export default function SavingsProgress({ goal, actual }) {
+  const { t } = useTranslation()
   const { resolved } = useTheme()
   const onTrack = actual >= goal
   const overspending = actual < 0
@@ -10,18 +12,18 @@ export default function SavingsProgress({ goal, actual }) {
 
   let message
   if (overspending) {
-    message = `You're overspending by ${formatCurrency(Math.abs(actual))} this month.`
+    message = t('savings.overspending', { amount: formatCurrency(Math.abs(actual)) })
   } else if (onTrack) {
-    message = `You're saving ${formatCurrency(actual)} of your ${formatCurrency(goal)} goal — on track!`
+    message = t('savings.onTrack', { actual: formatCurrency(actual), goal: formatCurrency(goal) })
   } else {
-    message = `You're saving ${formatCurrency(actual)} of your ${formatCurrency(goal)} goal — ${formatCurrency(goal - actual)} short.`
+    message = t('savings.short', { actual: formatCurrency(actual), goal: formatCurrency(goal), short: formatCurrency(goal - actual) })
   }
 
   return (
     <div className="rounded-xl border border-card-border bg-card p-5">
-      <h2 className="mb-3 text-sm font-semibold text-ink">Savings progress</h2>
+      <h2 className="mb-3 text-sm font-semibold text-ink">{t('savings.progress')}</h2>
       <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="text-muted">Saved this month</span>
+        <span className="text-muted">{t('savings.savedThisMonth')}</span>
         <span className={`font-semibold ${overspending ? 'text-expense' : 'text-ink'}`}>
           {formatCurrency(actual)} / {formatCurrency(goal)}
         </span>

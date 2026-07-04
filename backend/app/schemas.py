@@ -14,13 +14,152 @@ def _default_empty(value):
     return value if value is not None else ""
 
 
+# ---------- Auth schemas ----------
+
+
+class UserRegister(BaseModel):
+    email: str = Field(..., max_length=255)
+    password: str = Field(..., min_length=6)
+    display_name: str = Field(default="", max_length=100)
+    security_question: Optional[str] = Field(default=None, max_length=200)
+    security_answer: Optional[str] = Field(default=None, max_length=200)
+    invite_code: Optional[str] = Field(default=None, max_length=50)
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+    remember_me: bool = False
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    display_name: str
+    first_name: str = ""
+    last_name: str = ""
+    avatar_data: Optional[str] = None
+    household_id: Optional[int] = None
+    security_question: Optional[str] = None
+    created_at: datetime
+
+
+class ProfileUpdate(BaseModel):
+    first_name: str = Field(default="", max_length=100)
+    last_name: str = Field(default="", max_length=100)
+    display_name: str = Field(default="", max_length=100)
+    security_question: Optional[str] = Field(default=None, max_length=200)
+    security_answer: Optional[str] = Field(default=None, max_length=200)
+
+
+class AvatarUpdate(BaseModel):
+    avatar_data: str = Field(..., max_length=2_000_000)
+
+
+class ForgotPasswordQuestion(BaseModel):
+    email: str
+
+
+class ForgotPasswordReset(BaseModel):
+    email: str
+    answer: str = Field(..., min_length=1, max_length=200)
+    new_password: str = Field(..., min_length=6)
+
+
+# ---------- Household schemas ----------
+
+
+class HouseholdCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+
+
+class HouseholdJoin(BaseModel):
+    invite_code: str
+
+
+class HouseholdMember(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    display_name: str
+    can_view_history: bool
+
+
+class HouseholdOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    invite_code: str
+    created_by: int
+    members: list[HouseholdMember] = []
+
+
+class HouseholdMemberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    display_name: str
+
+
+class MemberHistoryAccessUpdate(BaseModel):
+    can_view_history: bool
+
+
+# ---------- Investment Funds ----------
+
+
+class InvestmentFundCreate(BaseModel):
+    fund_type: str = Field(..., pattern="^(investment|keren_hishtalmut)$")
+    name: str = Field(..., min_length=1, max_length=100)
+    current_balance: float = Field(..., ge=0)
+    annual_return_pct: float = Field(..., ge=0, le=100)
+    monthly_contribution: float = Field(default=0.0, ge=0)
+    management_fee_pct: float = Field(default=0.0, ge=0, le=100)
+    salary: Optional[float] = Field(default=None, ge=0)
+
+
+class InvestmentFundUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    current_balance: float = Field(..., ge=0)
+    annual_return_pct: float = Field(..., ge=0, le=100)
+    monthly_contribution: float = Field(default=0.0, ge=0)
+    management_fee_pct: float = Field(default=0.0, ge=0, le=100)
+    salary: Optional[float] = Field(default=None, ge=0)
+
+
+class InvestmentFundOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    fund_type: str
+    name: str
+    current_balance: float
+    annual_return_pct: float
+    monthly_contribution: float
+    management_fee_pct: float
+    salary: Optional[float] = None
+    user_id: int
+    household_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Expenses ----------
+
+
 class ExpenseCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
     description: Optional[str] = Field(default="", max_length=200)
     amount: float = Field(..., gt=0)
     category: Category
-    # If omitted, the route defaults this to today's date.
     date: Optional[date_type] = None
 
     @field_validator("description", mode="before")
@@ -32,7 +171,6 @@ class ExpenseCreate(BaseModel):
 class ExpenseUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
-    # Only amount is required on edit - omitted fields keep their current value.
     description: Optional[str] = Field(default=None, max_length=200)
     amount: float = Field(..., gt=0)
     category: Optional[Category] = None
@@ -45,12 +183,19 @@ class ExpenseOut(BaseModel):
     id: int
     description: str
     amount: float
-    # Plain str (not Category) so rows with an older/unlisted category value
-    # already in the database can still be read back instead of failing validation.
     category: str
     date: date_type
     recurring_id: Optional[int] = None
+    user_id: Optional[int] = None
+    household_id: Optional[int] = None
     created_at: datetime
+
+    @property
+    def is_shared(self) -> bool:
+        return self.household_id is not None
+
+
+# ---------- Income ----------
 
 
 class IncomeCreate(BaseModel):
@@ -82,10 +227,11 @@ class IncomeOut(BaseModel):
     id: int
     description: str
     amount: float
-    # Plain str, same reasoning as ExpenseOut.category above.
     source: str
     date: date_type
     recurring_id: Optional[int] = None
+    user_id: Optional[int] = None
+    household_id: Optional[int] = None
     created_at: datetime
 
 
@@ -100,6 +246,9 @@ class IncomeSummary(BaseModel):
     by_source: IncomeBySource
 
 
+# ---------- Budget settings ----------
+
+
 class BudgetSettingsOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -112,6 +261,18 @@ class BudgetSettingsUpdate(BaseModel):
     monthly_spending_limit: float = Field(..., ge=0)
 
 
+class CategoryBudgetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    category: str
+    amount: float
+
+
+class CategoryBudgetUpdate(BaseModel):
+    category: str = Field(..., min_length=1, max_length=50)
+    amount: float = Field(..., ge=0)
+
+
 class Overview(BaseModel):
     total_income: float
     income_by_source: IncomeBySource
@@ -121,6 +282,9 @@ class Overview(BaseModel):
     remaining: float
     savings_actual: float
     on_track: bool
+
+
+# ---------- Recurring entries ----------
 
 
 class RecurringCreate(BaseModel):
@@ -149,8 +313,30 @@ class RecurringCreate(BaseModel):
         return self
 
 
-class RecurringUpdate(RecurringCreate):
-    pass
+class RecurringUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
+    type: RecurringType
+    description: Optional[str] = Field(default="", max_length=200)
+    amount: float = Field(..., gt=0)
+    category: Optional[Category] = None
+    source: Optional[IncomeSource] = None
+    day_of_month: int = Field(..., ge=1, le=28)
+    active: bool = True
+    is_subscription: bool = False
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def _default_empty_description(cls, value):
+        return _default_empty(value)
+
+    @model_validator(mode="after")
+    def _require_category_or_source(self):
+        if self.type == "expense" and not self.category:
+            raise ValueError("category is required when type is 'expense'")
+        if self.type == "income" and not self.source:
+            raise ValueError("source is required when type is 'income'")
+        return self
 
 
 class RecurringOut(BaseModel):
@@ -165,6 +351,8 @@ class RecurringOut(BaseModel):
     day_of_month: int
     active: bool
     is_subscription: bool
+    user_id: Optional[int] = None
+    household_id: Optional[int] = None
     created_at: datetime
 
 
@@ -179,6 +367,9 @@ class SubscriptionsOut(BaseModel):
     summary: SubscriptionsSummary
 
 
+# ---------- Accounts ----------
+
+
 class AccountCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
@@ -188,8 +379,13 @@ class AccountCreate(BaseModel):
     category: Optional[str] = Field(default=None, max_length=50)
 
 
-class AccountUpdate(AccountCreate):
-    pass
+class AccountUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
+    name: str = Field(..., min_length=1, max_length=100)
+    type: AccountType
+    balance: float = Field(..., ge=0)
+    category: Optional[str] = Field(default=None, max_length=50)
 
 
 class AccountOut(BaseModel):
@@ -200,6 +396,8 @@ class AccountOut(BaseModel):
     type: str
     balance: float
     category: Optional[str] = None
+    user_id: Optional[int] = None
+    household_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
@@ -208,6 +406,9 @@ class NetWorthSummary(BaseModel):
     total_assets: float
     total_liabilities: float
     net_worth: float
+
+
+# ---------- Forecast ----------
 
 
 class ForecastMonth(BaseModel):

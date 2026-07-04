@@ -31,7 +31,20 @@ resources:
     memory: 256Mi
 
 # Extra environment variables for the backend container (e.g. DATABASE_URL).
+# Do NOT put secrets here - this ends up in the Helm release values/history in
+# plain text. Use envSecretName below for anything sensitive (JWT_SECRET_KEY,
+# a DATABASE_URL with credentials, etc).
 env: {}
+
+# Name of an existing Kubernetes Secret whose keys are all injected as env
+# vars (via envFrom.secretRef), e.g. JWT_SECRET_KEY. Keys in this Secret take
+# precedence over the same key in `env` above if both are set. Create it with:
+#   kubectl create secret generic expense-tracker-backend-secret \
+#     --namespace expense-tracker \
+#     --from-literal=JWT_SECRET_KEY="$(openssl rand -hex 32)"
+# Empty disables it (falls back to the app's hardcoded dev default - fine for
+# local/docker-compose, not for anything real).
+envSecretName: ""
 
 # Prometheus ServiceMonitor (requires the Prometheus Operator CRDs, e.g. from kube-prometheus-stack).
 metrics:

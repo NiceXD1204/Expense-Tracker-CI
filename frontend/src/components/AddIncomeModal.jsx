@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { INCOME_SOURCES, getIncomeSourceMeta } from '../constants/incomeSources'
+import { useAuth } from '../context/AuthContext'
 import { toDateInputValue } from '../utils/format'
 
 export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
+  const { t } = useTranslation()
+  const { user } = useAuth()
   const isEdit = Boolean(entry)
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
@@ -57,7 +61,9 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">{isEdit ? 'Edit income' : 'Add income'}</h2>
+          <h2 className="text-lg font-semibold text-ink">
+            {isEdit ? t('common.editIncome') : t('common.addIncome')}
+          </h2>
           <button
             onClick={handleClose}
             aria-label="Close"
@@ -69,7 +75,9 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Description (optional)</label>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              {t('common.descriptionOptional')}
+            </label>
             <input
               type="text"
               value={description}
@@ -81,7 +89,7 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Amount</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.amount')}</label>
             <input
               type="number"
               step="0.01"
@@ -94,7 +102,7 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Source</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.source')}</label>
             <select
               value={source}
               onChange={(e) => setSource(e.target.value)}
@@ -112,7 +120,7 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Date</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{t('common.date')}</label>
             <input
               type="date"
               value={date}
@@ -120,6 +128,12 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
               className="w-full rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </div>
+
+          {user?.household_id && (
+            <p className="rounded-lg bg-accent/10 px-3 py-2 text-xs font-medium text-accent">
+              👥 {t('common.autoSharedNote')}
+            </p>
+          )}
 
           {error && <p className="text-sm text-expense">{error}</p>}
 
@@ -129,14 +143,14 @@ export default function AddIncomeModal({ open, entry, onClose, onSubmit }) {
               onClick={handleClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-card-border"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
             >
-              {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add income'}
+              {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('common.addIncome')}
             </button>
           </div>
         </form>

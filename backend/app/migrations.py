@@ -2,11 +2,10 @@
 
 `Base.metadata.create_all()` (used in main.py's lifespan) only creates tables
 that don't exist yet - it never adds new columns to a table that's already
-there. Since this project intentionally has no Alembic/migration framework
-(see models.py docstring), this module does the one thing that needs doing
-by hand: add newly-introduced columns to already-existing tables, then
-backfill sensible values into them, so existing local/docker-compose data
-keeps working after a model change.
+there. This module does the one thing that needs doing by hand: add
+newly-introduced columns to already-existing tables, then backfill sensible
+values into them, so existing local/docker-compose data keeps working after a
+model change.
 """
 
 from datetime import datetime, timezone
@@ -15,16 +14,39 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
 _NEW_COLUMNS = {
+    "users": [
+        ("security_question", "VARCHAR(200)"),
+        ("security_answer_hash", "VARCHAR(255)"),
+        ("first_name", "VARCHAR(100)"),
+        ("last_name", "VARCHAR(100)"),
+        ("avatar_data", "TEXT"),
+        ("household_joined_at", "TIMESTAMP"),
+        ("can_view_history", "BOOLEAN"),
+    ],
     "expenses": [
         ("date", "DATE"),
         ("recurring_id", "INTEGER"),
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
     "income": [
         ("date", "DATE"),
         ("recurring_id", "INTEGER"),
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
     "recurring_entries": [
         ("is_subscription", "BOOLEAN"),
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
+    ],
+    "budget_settings": [
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
+    ],
+    "accounts": [
+        ("user_id", "INTEGER"),
+        ("household_id", "INTEGER"),
     ],
 }
 
@@ -77,6 +99,71 @@ def backfill_subscription_flag(session_factory, models) -> None:
         for row in rows:
             row.is_subscription = False
         if rows:
+            db.commit()
+    finally:
+        db.close()
+
+
+def backfill_share_household_data(session_factory, models) -> None:
+    """Stamping household_id only ever happened at create/edit time, so any
+    row a household member created before they joined (or before the
+    household even existed) was never shared - it's still sitting there as a
+    private row with household_id NULL, invisible to the rest of the
+    household no matter what their can_view_history says. Retroactively
+    share every current household member's own pre-existing rows into their
+    household. Idempotent: only touches rows still unstamped
+    (household_id IS NULL), so running this repeatedly - on every app
+    startup, and again after every join/create - never re-touches a row
+    that's already shared and never duplicates or drops anything."""
+    db = session_factory()
+    try:
+        changed = False
+        entry_models = [
+            models.Expense,
+            models.Income,
+            models.RecurringEntry,
+            models.Account,
+            models.InvestmentFund,
+            models.CategoryBudget,
+            models.BudgetSettings,
+        ]
+        members = db.query(models.User).filter(models.User.household_id.isnot(None)).all()
+        for member in members:
+            for model in entry_models:
+                rows = (
+                    db.query(model)
+                    .filter(model.user_id == member.id, model.household_id.is_(None))
+                    .all()
+                )
+                for row in rows:
+                    row.household_id = member.household_id
+                    changed = True
+        if changed:
+            db.commit()
+    finally:
+        db.close()
+
+
+def backfill_household_history_access(session_factory, models) -> None:
+    """Give every pre-existing user an explicit can_view_history (default
+    True - they already had full access before this feature existed) instead
+    of leaving it NULL, and a best-guess household_joined_at (their account
+    created_at) for anyone already in a household, so the creator can
+    meaningfully restrict their history access later instead of the toggle
+    silently doing nothing for lack of a join date."""
+    db = session_factory()
+    try:
+        changed = False
+        for row in db.query(models.User).filter(models.User.can_view_history.is_(None)).all():
+            row.can_view_history = True
+            changed = True
+        for row in db.query(models.User).filter(
+            models.User.household_id.isnot(None),
+            models.User.household_joined_at.is_(None),
+        ).all():
+            row.household_joined_at = row.created_at
+            changed = True
+        if changed:
             db.commit()
     finally:
         db.close()
