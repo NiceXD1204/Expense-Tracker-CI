@@ -19,6 +19,9 @@ ingress:
   path: /
   pathType: Prefix
   annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
 
 resources:
   requests:
