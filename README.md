@@ -19,50 +19,13 @@ without leaving anything running (and billing) overnight.
 
 ```mermaid
 flowchart LR
-    Root["Expense Tracker DevOps Project"]
-
-    Root --> AppArch["App Architecture"]
-    AppArch --> A1["React + Vite - nginx, port 80"]
-    AppArch --> A2["FastAPI - port 8000"]
-    AppArch --> A3["PostgreSQL 16 - port 5432"]
-    AppArch --> A4["Docker Compose - local dev"]
-
+    Root["Expense Tracker DevOps Project"] --> AppArch["App Architecture"]
     Root --> Infra["Infrastructure - IaC"]
-    Infra --> I1["AWS - eu-central-1"]
-    Infra --> I2["Terraform - reusable module, S3 state"]
-    Infra --> I3["Amazon EKS"]
-    Infra --> I4["VPC and NAT Gateway"]
-    Infra --> I5["Amazon ECR"]
-    Infra --> I6["Ingress-Nginx"]
-
     Root --> CICD["CI-CD and GitOps"]
-    CICD --> C1["GitHub Actions"]
-    CICD --> C2["ArgoCD"]
-    CICD --> C3["Helm Charts"]
-    CICD --> C4["App of Apps pattern"]
-    CICD --> C5["GitHub Flow - protected master"]
-
     Root --> Features["Application Features"]
-    Features --> F1["Data Isolation - User or Household"]
-    Features --> F2["JWT and bcrypt"]
-    Features --> F3["Shared Household Account"]
-    Features --> F4["i18n and RTL support"]
-
     Root --> Mon["Monitoring"]
-    Mon --> M1["kube-prometheus-stack"]
-    Mon --> M2["Prometheus"]
-    Mon --> M3["Grafana"]
-    Mon --> M4["Alertmanager to Slack"]
-
     Root --> Cost["Cost Management"]
-    Cost --> CM1["Session-based clusters"]
-    Cost --> CM2["Morning setup, Evening teardown"]
-    Cost --> CM3["Spot worker nodes"]
-    Cost --> CM4["Terraform destroy"]
-
     Root --> Repos["Repositories"]
-    Repos --> R1["Expense-Tracker-CI - App Code and Charts"]
-    Repos --> R2["Expense-Tracker-CD - Infra and GitOps"]
 
     classDef appArch fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
     classDef infra fill:#dcfce7,stroke:#22c55e,color:#14532d;
@@ -72,14 +35,19 @@ flowchart LR
     classDef cost fill:#e0f2fe,stroke:#0ea5e9,color:#0c4a6e;
     classDef repos fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
 
-    class AppArch,A1,A2,A3,A4 appArch;
-    class Infra,I1,I2,I3,I4,I5,I6 infra;
-    class CICD,C1,C2,C3,C4,C5 cicd;
-    class Features,F1,F2,F3,F4 features;
-    class Mon,M1,M2,M3,M4 mon;
-    class Cost,CM1,CM2,CM3,CM4 cost;
-    class Repos,R1,R2 repos;
+    class AppArch appArch;
+    class Infra infra;
+    class CICD cicd;
+    class Features features;
+    class Mon mon;
+    class Cost cost;
+    class Repos repos;
 ```
+
+> 🔍 **Want the full breakdown?** Open [ARCHITECTURE.html](ARCHITECTURE.html) in a
+> browser for an interactive, NotebookLM-style mind map — click a branch to
+> expand/collapse it, scroll to zoom, drag to pan. (GitHub can't run the
+> interactive version inline in this README, so download/open the file locally.)
 
 ## What I used
 
