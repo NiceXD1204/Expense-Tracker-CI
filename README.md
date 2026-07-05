@@ -9,7 +9,7 @@ have monitoring in place so I'd actually know if something broke — all on AWS,
 student budget.
 
 This is an expense tracker app — a FastAPI backend backed by PostgreSQL, with a
-Streamlit UI for adding, listing, and summarizing expenses. The point isn't really
+React + Vite frontend (served by nginx) for adding, listing, and summarizing expenses. The point isn't really
 the app itself; it's everything around it: Terraform-provisioned EKS, Helm charts,
 ArgoCD GitOps deploys, GitHub Actions CI/CD, and Prometheus/Grafana monitoring,
 all built so the whole stack can be spun up for a session and torn down again
@@ -18,37 +18,49 @@ without leaving anything running (and billing) overnight.
 ## Architecture
 
 ```mermaid
-flowchart LR
-    subgraph Cluster["EKS cluster (eu-central-1)"]
-        FE["Streamlit frontend\n:8501"] -->|HTTP| BE["FastAPI backend\n:8000"]
-        BE -->|SQL| DB["PostgreSQL\nStatefulSet"]
-        BE -- "/metrics" --> Prom["Prometheus"]
-        Prom --> Grafana
-        Argo["ArgoCD"] -- syncs Helm releases --> FE
-        Argo -- syncs Helm releases --> BE
-        Argo -- syncs Helm releases --> DB
-        Ingress["ingress-nginx\n(NLB)"] --> FE
-        Ingress --> BE
-    end
-
-    Dev["git push to master"] --> CI["GitHub Actions"]
-    CI -->|build & push images| ECR["Amazon ECR"]
-    CI -->|update image tags| Infra["expense-tracker-infra repo\n(gitops/dev/values-*.yaml)"]
-    Infra --> Argo
-    ECR --> FE
-    ECR --> BE
-    User((Browser)) --> Ingress
+mindmap
+  root((Expense Tracker DevOps Project))
+    App Architecture
+      Frontend: React + Vite - nginx, port 80
+      Backend: FastAPI - port 8000
+      Database: PostgreSQL 16 - port 5432
+      Local Dev: Docker Compose
+    Infrastructure - IaC
+      Cloud: AWS - eu-central-1
+      Provisioning: Terraform - reusable module, S3 state
+      Orchestration: Amazon EKS
+      Networking: VPC and NAT Gateway
+      Registry: Amazon ECR
+      Load Balancing: Ingress-Nginx
+    CI-CD and GitOps
+      Workflows: GitHub Actions
+      GitOps: ArgoCD
+      Packaging: Helm Charts
+      Deployment Pattern: App of Apps
+      Strategy: GitHub Flow - protected master
+    Application Features
+      Data Isolation: User or Household
+      Security: JWT and bcrypt hashing
+      Collaboration: Shared Household Account
+      Internationalization: i18n and RTL support
+    Monitoring and Observability
+      Stack: kube-prometheus-stack
+      Metrics: Prometheus
+      Visualization: Grafana
+      Alerting: Alertmanager to Slack
+    Cost Management
+      Strategy: Session-based clusters
+      Procedure: Morning setup, Evening teardown
+      Resource Type: Spot worker nodes
+      Automation: Terraform destroy
+    Repositories
+      Expense-Tracker-CI - App Code and Charts
+      Expense-Tracker-CD - Infra and GitOps
 ```
-
-| Service  | Tech               | Port |
-| -------- | ------------------ | ---- |
-| frontend | Python + Streamlit | 8501 |
-| backend  | Python + FastAPI   | 8000 |
-| db       | PostgreSQL 16      | 5432 |
 
 ## What I used
 
-- **App**: Python, FastAPI, Streamlit, PostgreSQL, pytest, ruff
+- **App**: Python, FastAPI, React + Vite, nginx, PostgreSQL, pytest, ruff
 - **Containers**: Docker, multi-stage builds, Docker Compose for local dev
 - **Infrastructure as Code**: Terraform (`terraform-aws-modules/vpc`, `terraform-aws-modules/eks`, IAM/OIDC for GitHub Actions)
 - **Orchestration**: Amazon EKS, AWS EBS CSI driver
@@ -64,7 +76,7 @@ This project spans two repos:
 ```
 expense-tracker/                 # this repo - the application
 ├── backend/                     # FastAPI service (+ tests)
-├── frontend/                    # Streamlit UI
+├── frontend/                    # React + Vite UI (served by nginx)
 ├── charts/
 │   ├── backend/                 # Deployment, Service, Ingress, ServiceMonitor, seed Job
 │   ├── frontend/                # Deployment, Service, Ingress
@@ -152,7 +164,7 @@ still billing.
 
 ```bash
 docker compose up --build
-# Frontend: http://localhost:8501
+# Frontend: http://localhost:80
 # Backend API docs: http://localhost:8000/docs
 ```
 
@@ -162,10 +174,10 @@ The backend auto-runs migrations on startup. A demo user (`demo@example.com` / `
 
 ### Test 1 — Register, login, "Remember me"
 
-1. Open `http://localhost:8501` → you are redirected to `/login` (not logged in).
+1. Open `http://localhost:80` → you are redirected to `/login` (not logged in).
 2. Click "Register" → create **User A**: `usera@test.com` / `password123`.
 3. Log in as User A. Check "Remember me". Add a **personal** expense (toggle = Personal). Call it "A's private expense".
-4. Close the browser tab, reopen `http://localhost:8501` → you are still logged in (token was in `localStorage`).
+4. Close the browser tab, reopen `http://localhost:80` → you are still logged in (token was in `localStorage`).
 5. Log out.
 6. Log in again WITHOUT checking "Remember me". Close and reopen the tab → you are sent back to `/login` (token was in `sessionStorage`, cleared on tab close). ✓
 
@@ -214,7 +226,7 @@ The backend auto-runs migrations on startup. A demo user (`demo@example.com` / `
 | | Local | AWS (dev cluster) |
 | --- | --- | --- |
 | How | `docker compose up --build` | `terraform apply` in `expense-tracker-infra/envs/dev` |
-| Frontend | http://localhost:8501 | via ingress-nginx NLB, host `expense-tracker.local` |
+| Frontend | http://localhost:80 | via ingress-nginx NLB, host `expense-tracker.local` |
 | Backend | http://localhost:8000/docs | via NLB, host `api.expense-tracker.local` |
 | Database | local Postgres container | Bitnami `postgresql` StatefulSet + EBS PVC |
 | Deploys | manual rebuild | GitHub Actions → ECR → ArgoCD GitOps |
@@ -233,7 +245,7 @@ With the cluster up:
    All four Applications (`expense-tracker-dev`, `-backend-dev`, `-frontend-dev`,
    `-db-dev`) should show **Synced / Healthy**.
 2. **The app** — open `http://expense-tracker.local` (via the NLB hostname + `Host`
-   header, or add it to `/etc/hosts`) for the Streamlit UI, and
+   header, or add it to `/etc/hosts`) for the React frontend, and
    `http://api.expense-tracker.local/docs` for the FastAPI Swagger UI.
 3. **Grafana** — `kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80`,
    open `http://localhost:3000` and check the cluster/node/pod dashboards plus the
@@ -252,7 +264,7 @@ Rough hourly cost while the cluster is up (`eu-central-1`, on-demand pricing):
 | --- | --- |
 | EKS control plane | $0.10 / hour |
 | NAT gateway | $0.045 / hour + data |
-| 1-2x `t3.small` spot worker node(s) | ~$0.01-0.02 / hour each |
+| 2x `t3.medium` spot worker nodes | ~$0.01-0.02 / hour each |
 | Network Load Balancer (ingress) | ~$0.025 / hour + usage |
 | ECR storage | negligible (few hundred MB) |
 | S3 + DynamoDB (Terraform state) | negligible (always on) |
