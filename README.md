@@ -56,13 +56,19 @@ mindmap
       Alertmanager
       Slack Notifications
 
+    flowchart TD
     Dev["git push to master"] --> CI["GitHub Actions"]
     CI -->|build & push images| ECR["Amazon ECR"]
     CI -->|update image tags| Infra["expense-tracker-infra repo\n(gitops/dev/values-*.yaml)"]
-    Infra --> Argo
-    ECR --> FE
-    ECR --> BE
-    User((Browser)) --> Ingress
+    
+    Infra --> Argo["ArgoCD (GitOps Pull)"]
+    
+    ECR --> FE["Frontend (React)"]
+    ECR --> BE["Backend (FastAPI)"]
+    
+    User((Browser)) --> Ingress["ingress-nginx (NLB)"]
+    Ingress --> FE
+    Ingress --> BE
 ```
 
 | Service  | Tech               | Port |
