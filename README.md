@@ -18,44 +18,67 @@ without leaving anything running (and billing) overnight.
 ## Architecture
 
 ```mermaid
-mindmap
-  root((Expense Tracker DevOps Project))
-    App Architecture
-      Frontend: React + Vite - nginx, port 80
-      Backend: FastAPI - port 8000
-      Database: PostgreSQL 16 - port 5432
-      Local Dev: Docker Compose
-    Infrastructure - IaC
-      Cloud: AWS - eu-central-1
-      Provisioning: Terraform - reusable module, S3 state
-      Orchestration: Amazon EKS
-      Networking: VPC and NAT Gateway
-      Registry: Amazon ECR
-      Load Balancing: Ingress-Nginx
-    CI-CD and GitOps
-      Workflows: GitHub Actions
-      GitOps: ArgoCD
-      Packaging: Helm Charts
-      Deployment Pattern: App of Apps
-      Strategy: GitHub Flow - protected master
-    Application Features
-      Data Isolation: User or Household
-      Security: JWT and bcrypt hashing
-      Collaboration: Shared Household Account
-      Internationalization: i18n and RTL support
-    Monitoring and Observability
-      Stack: kube-prometheus-stack
-      Metrics: Prometheus
-      Visualization: Grafana
-      Alerting: Alertmanager to Slack
-    Cost Management
-      Strategy: Session-based clusters
-      Procedure: Morning setup, Evening teardown
-      Resource Type: Spot worker nodes
-      Automation: Terraform destroy
-    Repositories
-      Expense-Tracker-CI - App Code and Charts
-      Expense-Tracker-CD - Infra and GitOps
+flowchart LR
+    Root["Expense Tracker DevOps Project"]
+
+    Root --> AppArch["App Architecture"]
+    AppArch --> A1["React + Vite - nginx, port 80"]
+    AppArch --> A2["FastAPI - port 8000"]
+    AppArch --> A3["PostgreSQL 16 - port 5432"]
+    AppArch --> A4["Docker Compose - local dev"]
+
+    Root --> Infra["Infrastructure - IaC"]
+    Infra --> I1["AWS - eu-central-1"]
+    Infra --> I2["Terraform - reusable module, S3 state"]
+    Infra --> I3["Amazon EKS"]
+    Infra --> I4["VPC and NAT Gateway"]
+    Infra --> I5["Amazon ECR"]
+    Infra --> I6["Ingress-Nginx"]
+
+    Root --> CICD["CI-CD and GitOps"]
+    CICD --> C1["GitHub Actions"]
+    CICD --> C2["ArgoCD"]
+    CICD --> C3["Helm Charts"]
+    CICD --> C4["App of Apps pattern"]
+    CICD --> C5["GitHub Flow - protected master"]
+
+    Root --> Features["Application Features"]
+    Features --> F1["Data Isolation - User or Household"]
+    Features --> F2["JWT and bcrypt"]
+    Features --> F3["Shared Household Account"]
+    Features --> F4["i18n and RTL support"]
+
+    Root --> Mon["Monitoring"]
+    Mon --> M1["kube-prometheus-stack"]
+    Mon --> M2["Prometheus"]
+    Mon --> M3["Grafana"]
+    Mon --> M4["Alertmanager to Slack"]
+
+    Root --> Cost["Cost Management"]
+    Cost --> CM1["Session-based clusters"]
+    Cost --> CM2["Morning setup, Evening teardown"]
+    Cost --> CM3["Spot worker nodes"]
+    Cost --> CM4["Terraform destroy"]
+
+    Root --> Repos["Repositories"]
+    Repos --> R1["Expense-Tracker-CI - App Code and Charts"]
+    Repos --> R2["Expense-Tracker-CD - Infra and GitOps"]
+
+    classDef appArch fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+    classDef infra fill:#dcfce7,stroke:#22c55e,color:#14532d;
+    classDef cicd fill:#fef9c3,stroke:#eab308,color:#713f12;
+    classDef features fill:#fae8ff,stroke:#d946ef,color:#701a75;
+    classDef mon fill:#ffe4e6,stroke:#f43f5e,color:#881337;
+    classDef cost fill:#e0f2fe,stroke:#0ea5e9,color:#0c4a6e;
+    classDef repos fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
+
+    class AppArch,A1,A2,A3,A4 appArch;
+    class Infra,I1,I2,I3,I4,I5,I6 infra;
+    class CICD,C1,C2,C3,C4,C5 cicd;
+    class Features,F1,F2,F3,F4 features;
+    class Mon,M1,M2,M3,M4 mon;
+    class Cost,CM1,CM2,CM3,CM4 cost;
+    class Repos,R1,R2 repos;
 ```
 
 ## What I used
