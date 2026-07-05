@@ -18,18 +18,43 @@ without leaving anything running (and billing) overnight.
 ## Architecture
 
 ```mermaid
-flowchart LR
-    subgraph Cluster["EKS cluster (eu-central-1)"]
-        FE["Streamlit frontend\n:8501"] -->|HTTP| BE["FastAPI backend\n:8000"]
-        BE -->|SQL| DB["PostgreSQL\nStatefulSet"]
-        BE -- "/metrics" --> Prom["Prometheus"]
-        Prom --> Grafana
-        Argo["ArgoCD"] -- syncs Helm releases --> FE
-        Argo -- syncs Helm releases --> BE
-        Argo -- syncs Helm releases --> DB
-        Ingress["ingress-nginx\n(NLB)"] --> FE
-        Ingress --> BE
-    end
+mindmap
+  root((Expense Tracker DevOps))
+    Application Stack
+      Frontend
+        React - Vite - Nginx
+        Port 80
+      Backend
+        Python - FastAPI
+        Port 8000
+      Database
+        PostgreSQL 16
+        Port 5432
+    Version Control
+      GitHub Flow
+      7 Branches Scheme
+        master
+        feature-auth-i18n-shared
+        feature-new-components
+        bugfix-critical-issue
+        release-v1-0
+        hotfix-production-bug
+        chore-update-deps
+    Continuous Integration
+      GitHub Actions
+      Multi-stage Docker Build
+      Push to Amazon ECR
+      Update GitOps CD Repo
+    Continuous Deployment
+      ArgoCD
+      GitOps
+      App of Apps Pattern
+      Amazon EKS Cluster
+    Monitoring and Alerts
+      kube-prometheus-stack
+      Grafana Dashboards
+      Alertmanager
+      Slack Notifications
 
     Dev["git push to master"] --> CI["GitHub Actions"]
     CI -->|build & push images| ECR["Amazon ECR"]
