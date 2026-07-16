@@ -8,6 +8,7 @@ const LANGUAGES = [
   { code: 'ru', flag: '🇷🇺', name: 'Русский' },
   { code: 'zh', flag: '🇨🇳', name: '中文' },
   { code: 'fr', flag: '🇫🇷', name: 'Français' },
+  { code: 'es', flag: '🇪🇸', name: 'Español' },
 ]
 
 export default function LanguageSwitcher({ className = '' }) {

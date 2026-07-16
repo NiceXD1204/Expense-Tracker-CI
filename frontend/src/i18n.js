@@ -7,6 +7,7 @@ import ar from './locales/ar.json'
 import ru from './locales/ru.json'
 import zh from './locales/zh.json'
 import fr from './locales/fr.json'
+import es from './locales/es.json'
 
 const saved = localStorage.getItem('language') || 'he'
 
@@ -18,6 +19,7 @@ i18n.use(initReactI18next).init({
     ru: { translation: ru },
     zh: { translation: zh },
     fr: { translation: fr },
+    es: { translation: es },
   },
   lng: saved,
   fallbackLng: 'en',
